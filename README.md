@@ -313,3 +313,23 @@ Jonathan Sandhu / Sandhu Consulting Group
 ---
 
 *The UI is the API. This is how it's done.*
+
+## Multi-OS Foundation (v0.3 direction)
+
+Screen Ghost now has a device-driver abstraction point so the core loop can stay OS-agnostic while transport/action backends vary by platform.
+
+- `DeviceDriver` contract for screenshot + fast-hands actions
+- `AndroidAdbDriver` as the default implementation
+- Future drivers: iOS (WDA), macOS, Windows
+
+This enables one orchestration/dashboard layer to route intents across fragmented apps while keeping UI automation as the fallback universal API.
+
+## Execution Base Shape (v0.3)
+
+To support multi-edge production use cases (airgapped legacy systems, fragmented consumer apps, and dashboard-first orchestration), this repo now includes foundational execution modules:
+
+- `core/contracts.py`: canonical intent/action/plan contracts
+- `core/policy.py`: app/action allowlist-denylist safety policy
+- `core/executor.py`: deterministic step execution with postcondition verification
+
+These modules establish the orchestrator shape needed for "virtual intelligence + fast hands" beyond a single Android edge.
