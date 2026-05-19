@@ -44,10 +44,13 @@ from typing import Optional, Tuple, List, Dict, Any, Generator
 
 from PIL import Image
 
+from drivers import AndroidAdbDriver, DeviceDriver
+
 # Model loading is deferred to avoid slow startup when just checking --help
 _model = None
 _processor = None
 _model_path = None
+_default_driver: DeviceDriver = AndroidAdbDriver()
 
 
 # =============================================================================
@@ -249,93 +252,41 @@ class ScreenState:
 
 
 # =============================================================================
-# ADB HELPERS
+# DEVICE DRIVER HELPERS
 # =============================================================================
 
+def get_driver(driver: Optional[DeviceDriver] = None) -> DeviceDriver:
+    return driver or _default_driver
+
+
 def adb_available() -> bool:
-    """Check if ADB is installed and accessible."""
-    try:
-        result = subprocess.run(["adb", "version"], capture_output=True, timeout=5)
-        return result.returncode == 0
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        return False
+    """Backward-compatible helper for Android availability."""
+    return _default_driver.available()
 
 
 def adb_devices() -> List[str]:
-    """List connected ADB devices."""
-    result = subprocess.run(["adb", "devices"], capture_output=True, text=True)
-    lines = result.stdout.strip().split("\n")[1:]
-    devices = []
-    for line in lines:
-        if "\tdevice" in line:
-            devices.append(line.split("\t")[0])
-    return devices
+    """Backward-compatible helper for Android devices."""
+    return _default_driver.list_devices()
 
 
 def adb_screencap(device: Optional[str] = None) -> Image.Image:
-    """Capture a PNG screenshot from the device and return a PIL Image."""
-    cmd = ["adb"]
-    if device:
-        cmd.extend(["-s", device])
-    cmd.extend(["exec-out", "screencap", "-p"])
-    
-    proc = subprocess.run(cmd, capture_output=True, timeout=10)
-    if proc.returncode != 0:
-        raise RuntimeError(f"adb screencap failed: {proc.stderr.decode('utf-8', errors='ignore')}")
-    
-    img = Image.open(io.BytesIO(proc.stdout)).convert("RGB")
-    return img
+    return _default_driver.screencap(device)
 
 
 def adb_tap(x: int, y: int, device: Optional[str] = None) -> None:
-    """Send a single tap at (x, y)."""
-    cmd = ["adb"]
-    if device:
-        cmd.extend(["-s", device])
-    cmd.extend(["shell", "input", "tap", str(int(x)), str(int(y))])
-    
-    proc = subprocess.run(cmd, capture_output=True, timeout=5)
-    if proc.returncode != 0:
-        raise RuntimeError(f"adb tap failed: {proc.stderr.decode('utf-8', errors='ignore')}")
+    _default_driver.tap(x, y, device)
 
 
 def adb_swipe(x1: int, y1: int, x2: int, y2: int, duration_ms: int = 300, device: Optional[str] = None) -> None:
-    """Swipe from (x1, y1) to (x2, y2)."""
-    cmd = ["adb"]
-    if device:
-        cmd.extend(["-s", device])
-    cmd.extend(["shell", "input", "swipe", str(x1), str(y1), str(x2), str(y2), str(duration_ms)])
-    
-    proc = subprocess.run(cmd, capture_output=True, timeout=5)
-    if proc.returncode != 0:
-        raise RuntimeError(f"adb swipe failed: {proc.stderr.decode('utf-8', errors='ignore')}")
+    _default_driver.swipe(x1, y1, x2, y2, duration_ms, device)
 
 
 def adb_text(text: str, device: Optional[str] = None) -> None:
-    """Type text (new in v0.2)."""
-    # Escape special characters for shell
-    escaped = text.replace(" ", "%s").replace("'", "\\'").replace('"', '\\"')
-    
-    cmd = ["adb"]
-    if device:
-        cmd.extend(["-s", device])
-    cmd.extend(["shell", "input", "text", escaped])
-    
-    proc = subprocess.run(cmd, capture_output=True, timeout=5)
-    if proc.returncode != 0:
-        raise RuntimeError(f"adb text failed: {proc.stderr.decode('utf-8', errors='ignore')}")
+    _default_driver.type_text(text, device)
 
 
 def adb_keyevent(keycode: int, device: Optional[str] = None) -> None:
-    """Send key event (e.g., 4=back, 3=home, 66=enter)."""
-    cmd = ["adb"]
-    if device:
-        cmd.extend(["-s", device])
-    cmd.extend(["shell", "input", "keyevent", str(keycode)])
-    
-    proc = subprocess.run(cmd, capture_output=True, timeout=5)
-    if proc.returncode != 0:
-        raise RuntimeError(f"adb keyevent failed: {proc.stderr.decode('utf-8', errors='ignore')}")
+    _default_driver.keyevent(keycode, device)
 
 
 # =============================================================================
@@ -452,13 +403,14 @@ def observe(
     device: Optional[str] = None,
     save_screenshot: bool = False,
     out_dir: Path = Path("log/screenshots"),
+    driver: Optional[DeviceDriver] = None,
 ) -> ScreenState:
     """
     Extract current screen state without acting.
     
     This is the core of observer mode - turn pixels into structured state.
     """
-    img = adb_screencap(device)
+    img = get_driver(driver).screencap(device)
     
     # Optionally save screenshot
     screenshot_path = None
@@ -484,6 +436,7 @@ def watch(
     app_filter: Optional[str] = None,
     save_screenshots: bool = False,
     out_dir: Path = Path("log/screenshots"),
+    driver: Optional[DeviceDriver] = None,
 ) -> Generator[ScreenState, None, None]:
     """
     Continuously observe screen and yield states.
@@ -498,6 +451,7 @@ def watch(
                 device=device,
                 save_screenshot=save_screenshots,
                 out_dir=out_dir,
+                driver=driver,
             )
             
             # Apply app filter
@@ -908,6 +862,7 @@ def run_observer(
                 app_filter=app_filter,
                 save_screenshots=save_screenshots,
                 out_dir=out_dir,
+                driver=driver,
             ):
                 logger.log_observation(state)
                 
