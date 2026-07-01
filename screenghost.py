@@ -566,31 +566,42 @@ Reply with ONLY the JSON object for your chosen action."""
     raise ValueError(f"Could not parse action from model response: {response}")
 
 
-def execute_action(action: Action, device: Optional[str] = None, screen_size: Tuple[int, int] = (1080, 1920)) -> None:
-    """Execute an action on the device."""
+def execute_action(
+    action: Action,
+    device: Optional[str] = None,
+    screen_size: Tuple[int, int] = (1080, 1920),
+    driver: Optional[DeviceDriver] = None,
+) -> None:
+    """Execute an action on the device.
+
+    If ``driver`` is provided the hands move through that driver, so an
+    injected (e.g. USB-only) backend is actually honored. Otherwise the
+    module-level default driver is used for backward compatibility.
+    """
     width, height = screen_size
-    
+    d = get_driver(driver)
+
     if action.action_type == "tap":
-        adb_tap(action.params["x"], action.params["y"], device)
-    
+        d.tap(action.params["x"], action.params["y"], device)
+
     elif action.action_type == "type":
-        adb_text(action.params["text"], device)
-    
+        d.type_text(action.params["text"], device)
+
     elif action.action_type == "swipe":
         direction = action.params.get("direction", "up")
         cx, cy = width // 2, height // 2
-        
+
         if direction == "up":
-            adb_swipe(cx, cy + 300, cx, cy - 300, device=device)
+            d.swipe(cx, cy + 300, cx, cy - 300, device=device)
         elif direction == "down":
-            adb_swipe(cx, cy - 300, cx, cy + 300, device=device)
+            d.swipe(cx, cy - 300, cx, cy + 300, device=device)
         elif direction == "left":
-            adb_swipe(cx + 300, cy, cx - 300, cy, device=device)
+            d.swipe(cx + 300, cy, cx - 300, cy, device=device)
         elif direction == "right":
-            adb_swipe(cx - 300, cy, cx + 300, cy, device=device)
-    
+            d.swipe(cx - 300, cy, cx + 300, cy, device=device)
+
     elif action.action_type == "back":
-        adb_keyevent(4, device)  # KEYCODE_BACK
+        d.keyevent(4, device)  # KEYCODE_BACK
 
 
 def check_progress(before: Image.Image, after: Image.Image, goal: str) -> Tuple[bool, str]:

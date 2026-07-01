@@ -333,3 +333,21 @@ To support multi-edge production use cases (airgapped legacy systems, fragmented
 - `core/executor.py`: deterministic step execution with postcondition verification
 
 These modules establish the orchestrator shape needed for "virtual intelligence + fast hands" beyond a single Android edge.
+
+## Threat Model: Local-Only Hands
+
+The point of fast hands is that the **execution surface is physical, not remote**.
+Screen Ghost can watch, reason, and decide over as many digital pathways as you
+like — but the hands that actually touch the UI stay on a physically attached
+device. There is no network API to the actuation layer, so there is no remote
+kill switch and no remote system to compromise. The attack surface collapses to
+physical access.
+
+That guarantee is now enforced in code, not just documented:
+
+- `FastHandsExecutor` actually drives each canonical action into the live UI and
+  then verifies the postcondition — the hands move, they aren't just checked.
+- `AndroidAdbDriver` is **local-only by default**. ADB over TCP/IP
+  (`adb connect host:port`) would quietly reintroduce a remote surface, so any
+  `host:port` device target is rejected with `RemoteHandsError`. Pass
+  `AndroidAdbDriver(allow_network=True)` to opt in with your eyes open.

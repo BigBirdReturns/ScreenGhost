@@ -1,9 +1,32 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import List, Optional
-from PIL import Image
+from typing import TYPE_CHECKING, List, Optional
+import re
 import subprocess
+
+if TYPE_CHECKING:  # imaging stack is only needed at screencap time
+    from PIL import Image
+
+
+# A network ADB target looks like "host:port" (e.g. "192.168.1.5:5555").
+# USB serials and emulator ids ("emulator-5554") never match this shape.
+_NETWORK_TARGET = re.compile(r"^.+:\d+$")
+
+
+def is_network_target(device: Optional[str]) -> bool:
+    """True if ``device`` is a TCP/IP ADB endpoint rather than a local one.
+
+    The whole security thesis of fast hands is that execution is physically
+    local: there is no remote surface to attack or to switch off. ADB over
+    TCP/IP (``adb connect host:port``) quietly reintroduces exactly that
+    surface, so we treat such targets as non-local.
+    """
+    return bool(device) and bool(_NETWORK_TARGET.match(device.strip()))
+
+
+class RemoteHandsError(RuntimeError):
+    """Raised when someone tries to move the hands over a network transport."""
 
 
 class DeviceDriver(ABC):
@@ -51,6 +74,19 @@ class DeviceDriver(ABC):
 class AndroidAdbDriver(DeviceDriver):
     name = "android_adb"
 
+    def __init__(self, allow_network: bool = False):
+        # Local-only by default: the hands stay on a physically attached
+        # device so no remote system can reach or disable them. Opt in
+        # explicitly (eyes open) if you really want network ADB.
+        self.allow_network = allow_network
+
+    def _guard_local(self, device: Optional[str]) -> None:
+        if not self.allow_network and is_network_target(device):
+            raise RemoteHandsError(
+                f"refusing network ADB target {device!r}: fast hands are "
+                "local-only. Pass allow_network=True to override."
+            )
+
     def available(self) -> bool:
         try:
             result = subprocess.run(["adb", "version"], capture_output=True, timeout=5)
@@ -63,9 +99,12 @@ class AndroidAdbDriver(DeviceDriver):
         lines = result.stdout.strip().split("\n")[1:]
         return [line.split("\t")[0] for line in lines if "\tdevice" in line]
 
-    def screencap(self, device: Optional[str] = None) -> Image.Image:
+    def screencap(self, device: Optional[str] = None) -> "Image.Image":
         from io import BytesIO
 
+        from PIL import Image
+
+        self._guard_local(device)
         cmd = ["adb"]
         if device:
             cmd.extend(["-s", device])
@@ -78,6 +117,7 @@ class AndroidAdbDriver(DeviceDriver):
         return Image.open(BytesIO(proc.stdout)).convert("RGB")
 
     def tap(self, x: int, y: int, device: Optional[str] = None) -> None:
+        self._guard_local(device)
         cmd = ["adb"]
         if device:
             cmd.extend(["-s", device])
@@ -95,6 +135,7 @@ class AndroidAdbDriver(DeviceDriver):
         duration_ms: int = 300,
         device: Optional[str] = None,
     ) -> None:
+        self._guard_local(device)
         cmd = ["adb"]
         if device:
             cmd.extend(["-s", device])
@@ -104,6 +145,7 @@ class AndroidAdbDriver(DeviceDriver):
             raise RuntimeError(f"adb swipe failed: {proc.stderr.decode('utf-8', errors='ignore')}")
 
     def type_text(self, text: str, device: Optional[str] = None) -> None:
+        self._guard_local(device)
         escaped = text.replace(" ", "%s").replace("'", "\\'").replace('"', '\\"')
         cmd = ["adb"]
         if device:
@@ -114,6 +156,7 @@ class AndroidAdbDriver(DeviceDriver):
             raise RuntimeError(f"adb text failed: {proc.stderr.decode('utf-8', errors='ignore')}")
 
     def keyevent(self, keycode: int, device: Optional[str] = None) -> None:
+        self._guard_local(device)
         cmd = ["adb"]
         if device:
             cmd.extend(["-s", device])
