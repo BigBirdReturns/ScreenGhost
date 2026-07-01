@@ -289,7 +289,8 @@ sqlite3 log/screenghost.db "SELECT * FROM steps WHERE run_id = 1"
 
 - [x] v0.1: Basic navigation (tap + verify)
 - [x] v0.2: Observer mode + text input + swipe
-- [ ] v0.3: Skills system (save and replay sequences)
+- [x] v0.3: Semantic skills foundation (label-anchored waypoints, staleness demotion)
+- [ ] v0.3: Skill learning (auto-record skills from successful VLM runs)
 - [ ] v0.3: Policy engine (block dangerous actions)
 - [ ] v0.4: Web UI for monitoring
 - [ ] v1.0: HDMI capture for non-Android devices
@@ -331,6 +332,7 @@ To support multi-edge production use cases (airgapped legacy systems, fragmented
 - `core/contracts.py`: canonical intent/action/plan contracts
 - `core/policy.py`: app/action allowlist-denylist safety policy
 - `core/executor.py`: deterministic step execution with postcondition verification
+- `core/skills.py`: semantic skills — label-anchored waypoints with staleness demotion
 
 These modules establish the orchestrator shape needed for "virtual intelligence + fast hands" beyond a single Android edge.
 
@@ -351,3 +353,67 @@ That guarantee is now enforced in code, not just documented:
   (`adb connect host:port`) would quietly reintroduce a remote surface, so any
   `host:port` device target is rejected with `RemoteHandsError`. Pass
   `AndroidAdbDriver(allow_network=True)` to opt in with your eyes open.
+
+## Why the UI Is the Only Stable API
+
+This project exists because of a lesson from the multi-protocol chat wars
+(Trillian vs. AOL, circa 2000). Trillian integrated every chat network through
+their protocols — and AOL changed OSCAR *specifically* to lock it out, over and
+over, until maintaining per-service adapters became a war of attrition. The
+pattern never stopped: APIs get deprecated, priced, rate-limited, or broken on
+purpose. DOMs churn weekly. Standards (Matter, anyone?) require every vendor to
+cooperate, so they arrive late and partial.
+
+But there is exactly **one interface a vendor cannot revoke: the one their
+paying customer uses.** They can break your protocol adapter overnight. They
+cannot break the screen, because the screen *is* the product. Every service,
+no matter how hostile to integration, must remain usable by a human — which
+means it remains usable by anything that operates at the human interface.
+
+Screen Ghost builds at that layer, so vendor churn has nowhere to bite:
+
+- **No per-service adapters to maintain.** When an app redesigns, the VLM
+  looks at the new screen and re-derives the path at runtime — the same way a
+  human copes with an update. The maintenance cost that killed multi-protocol
+  clients becomes a no-op.
+- **Canonical intents stay stable forever.** `CanonicalTarget`/`CanonicalAction`
+  (`hvac.Home.thermostat`, `set`, `72`) are the durable vocabulary; the per-app
+  "how" is disposable and re-derivable.
+- **Human speed per app, parallel across apps.** One user intent fans out to a
+  `RunPlan` driving N vendor apps simultaneously — ten humans under one
+  gesture. Each vendor just sees an ordinary user.
+
+### Semantic Skills: Cache Meaning, Never Pixels
+
+The one place the old failure mode could sneak back in is a skills system that
+records tap coordinates — that's a per-service adapter rebuilt one macro at a
+time, brittle to exactly the churn this architecture exists to shrug off.
+
+So skills in Screen Ghost (`core/skills.py`) store **semantic waypoints**:
+"tap the element labeled *Display*", never "tap (340, 520)". At replay time
+each label is resolved against the live screen. When a redesign moves or
+renames things, the skill goes stale, gets demoted after repeated failures,
+and the VLM re-derives the path from the new screens.
+
+```python
+from core.skills import SemanticSkill, SkillStore, Waypoint
+from core.executor import FastHandsExecutor
+
+store = SkillStore()  # log/skills.json
+store.save_skill(SemanticSkill(
+    intent_key="toggle:display.Settings.Dark Mode",
+    app="Settings",
+    waypoints=[
+        Waypoint(action="tap", label="Display", expect_screen="Display"),
+        Waypoint(action="tap", label="Dark Mode"),
+    ],
+))
+
+executor = FastHandsExecutor(skill_store=store)
+# Known skills run as the fast path; stale skills fall back to live
+# VLM derivation. Losing every skill costs speed, never capability.
+```
+
+The invariant: **the project adapts to everything except hands losing out to
+evolution.** As long as the target system takes human input, Screen Ghost can
+drive it — no vendor cooperation, no standard, no API contract required.

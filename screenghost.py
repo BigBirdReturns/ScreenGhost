@@ -764,9 +764,11 @@ def save_screenshot(img: Image.Image, out_dir: Path, prefix: str) -> Path:
 
 
 def run_navigator(goal: str, device: Optional[str], max_steps: int,
-                  delay: float, out_dir: Path, db_path: Path) -> bool:
+                  delay: float, out_dir: Path, db_path: Path,
+                  driver: Optional[DeviceDriver] = None) -> bool:
     """Navigator mode: accomplish a goal through UI automation."""
-    
+
+    d = get_driver(driver)
     logger = RunLogger(db_path)
     run_id = logger.start_run(goal)
     
@@ -784,7 +786,7 @@ def run_navigator(goal: str, device: Optional[str], max_steps: int,
     try:
         for step in range(max_steps):
             print(f"[step {step}] Capturing screen...")
-            before = adb_screencap(device)
+            before = d.screencap(device)
             before_path = save_screenshot(before, out_dir, f"run{run_id}_step{step}_before")
             
             # Check if already done
@@ -808,12 +810,12 @@ def run_navigator(goal: str, device: Optional[str], max_steps: int,
             print(f"[step {step}] → {action.action_type.upper()} {action.params}: {action.reason}")
             
             print(f"[step {step}] Executing action...")
-            execute_action(action, device, (before.width, before.height))
+            execute_action(action, device, (before.width, before.height), driver=d)
             
             time.sleep(delay)
             
             print(f"[step {step}] Capturing result...")
-            after = adb_screencap(device)
+            after = d.screencap(device)
             after_path = save_screenshot(after, out_dir, f"run{run_id}_step{step}_after")
             
             print(f"[step {step}] Checking progress...")
