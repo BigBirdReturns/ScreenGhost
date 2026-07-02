@@ -356,8 +356,9 @@ That guarantee is now enforced in code, not just documented:
 
 > **See it argued visually:** [`docs/index.html`](docs/index.html) is a GitHub
 > Pages one-pager with a live breaking-change simulation and the cost curves —
-> the Page365/Trillian bottleneck, solved. Enable it under Settings → Pages →
-> deploy from branch → `main` / `docs`.
+> the Page365/Trillian bottleneck, solved. Deployed by
+> [`.github/workflows/pages.yml`](.github/workflows/pages.yml) on pushes to
+> `main` that touch `docs/` (set Settings → Pages → Source to "GitHub Actions").
 
 ## Why the UI Is the Only Stable API
 
