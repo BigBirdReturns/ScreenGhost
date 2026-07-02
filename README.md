@@ -423,3 +423,14 @@ executor = FastHandsExecutor(skill_store=store)
 The invariant: **the project adapts to everything except hands losing out to
 evolution.** As long as the target system takes human input, Screen Ghost can
 drive it — no vendor cooperation, no standard, no API contract required.
+
+### First production consumer
+
+This isn't hypothetical anymore.
+[`axm-tools/pta-tracker`](https://github.com/BigBirdReturns/axm-tools) — a
+GitHub-Actions legislation tracker for a school-district PTA — has exactly
+one source its datacenter runner can never reach: the board-agenda system
+behind Incapsula bot protection. Its escape hatch is an `observed.json`
+drop-box that observer mode fills from a phone showing the agenda, an
+interface no bot protection can revoke. The walkthrough lives in
+[`examples/pta_agenda_observer.md`](examples/pta_agenda_observer.md).
