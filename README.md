@@ -208,6 +208,41 @@ print(diff)
 
 The screen is the universal API. Any app. Any device. No permission needed.
 
+## No Hardware Required
+
+You can develop, evaluate, and improve Screen Ghost today without plugging in
+a single device. The screen loop doesn't care where pixels come from:
+
+**Emulators — a full live target, zero cables**
+- The standard Android Emulator (AVD) exposes ADB exactly like a phone;
+  everything in this repo works against it unchanged, including headless in CI
+  (e.g. `reactivecircus/android-emulator-runner` in GitHub Actions).
+- Cloud device farms (BrowserStack, Genymotion SaaS) are ADB-over-network —
+  which the local-only guard rejects by design. `AndroidAdbDriver(allow_network=True)`
+  is the deliberate, eyes-open opt-in for development against them.
+
+**Public UI datasets — measure the model, mine skills offline**
+- **RICO** (interactionmining.org): ~66k Android screens *with view
+  hierarchies* — ground-truth labels and bounds for scoring observer mode's
+  element extraction.
+- **Android in the Wild (AITW)** (google-research on GitHub): hundreds of
+  thousands of episodes of real humans completing tasks — screenshots plus the
+  actions taken. Evaluate `pick_action` step-by-step, or mine label-anchored
+  waypoints into semantic skills without ever driving a device.
+- **ScreenSpot** (Hugging Face): instruction → click-point grounding
+  benchmark; directly scores the tap-the-right-element skill.
+- **AndroidControl / AndroidWorld** (google-research): task-level benchmarks
+  when you're ready to score whole runs, not single taps.
+
+**The plumbing for all of it lives in this repo:**
+- `ReplayDriver` (`drivers.py`): serves dataset screenshots as the "device,"
+  records every tap/type/swipe for assertions or export — the full
+  observe/decide/act loop with no phone attached.
+- `evals/grounding_eval.py`: point it at a JSONL manifest of
+  `(image, instruction, bbox)` rows and get a grounding accuracy number for
+  the vision model. The "model accuracy varies" limitation becomes a metric
+  you can watch improve as you swap models or prompts.
+
 ## Requirements
 
 **Hardware:**

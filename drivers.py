@@ -71,6 +71,65 @@ class DeviceDriver(ABC):
         pass
 
 
+class ReplayDriver(DeviceDriver):
+    """Device-free driver: serves recorded screens, records the hands' moves.
+
+    This is the adapter between Screen Ghost and public UI datasets (RICO,
+    Android in the Wild, ScreenSpot) or any saved screenshot trace — the
+    whole observe/decide/act loop runs with no phone attached. Each frame
+    is a filesystem path or a PIL Image; every action advances to the next
+    frame (acting changes the world) and is appended to ``actions`` for
+    assertions or export.
+    """
+
+    name = "replay"
+
+    def __init__(self, frames):
+        self.frames = list(frames)
+        self.index = 0
+        self.actions: List[dict] = []
+
+    def available(self) -> bool:
+        return bool(self.frames)
+
+    def list_devices(self) -> List[str]:
+        return ["replay-0"]
+
+    def screencap(self, device: Optional[str] = None):
+        if not self.frames:
+            raise RuntimeError("ReplayDriver has no frames loaded")
+        frame = self.frames[min(self.index, len(self.frames) - 1)]
+        if hasattr(frame, "convert"):  # already a PIL Image
+            return frame.convert("RGB")
+        from PIL import Image
+
+        return Image.open(frame).convert("RGB")
+
+    def _record(self, action: str, **params) -> None:
+        self.actions.append({"action": action, **params})
+        self.index = min(self.index + 1, len(self.frames) - 1)
+
+    def tap(self, x: int, y: int, device: Optional[str] = None) -> None:
+        self._record("tap", x=int(x), y=int(y))
+
+    def swipe(
+        self,
+        x1: int,
+        y1: int,
+        x2: int,
+        y2: int,
+        duration_ms: int = 300,
+        device: Optional[str] = None,
+    ) -> None:
+        self._record("swipe", x1=x1, y1=y1, x2=x2, y2=y2, duration_ms=duration_ms)
+
+    def type_text(self, text: str, device: Optional[str] = None) -> None:
+        self._record("type", text=text)
+
+    def keyevent(self, keycode: int, device: Optional[str] = None) -> None:
+        self._record("keyevent", keycode=keycode)
+
+
 class AndroidAdbDriver(DeviceDriver):
     name = "android_adb"
 
