@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Screen Ghost — The Cat-and-Mouse Ends Here</title>
+<meta name="description" content="How Screen Ghost solves the Page365 bottleneck: integrate at the one interface a platform cannot revoke.">
+<style>
+  :root {
+    --page:        #f9f9f7;
+    --surface-1:   #fcfcfb;
+    --text-primary:#0b0b0b;
+    --text-secondary:#52514e;
+    --text-muted:  #898781;
+    --grid:        #e1e0d9;
+    --axis:        #c3c2b7;
+    --border:      rgba(11,11,11,0.10);
+    --sg:          #2a78d6;   /* Screen Ghost — categorical slot 1 (blue) */
+    --adapter:     #eda100;   /* Protocol adapter — categorical slot 3 (yellow) */
+    --status-good:     #0ca30c;
+    --status-warning:  #fab219;
+    --status-critical: #d03b3b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --page:        #0d0d0d;
+      --surface-1:   #1a1a19;
+      --text-primary:#ffffff;
+      --text-secondary:#c3c2b7;
+      --text-muted:  #898781;
+      --grid:        #2c2c2a;
+      --axis:        #383835;
+      --border:      rgba(255,255,255,0.10);
+      --sg:          #3987e5;
+      --adapter:     #c98500;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--text-primary);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.55;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+  section { padding: 48px 0; }
+  h1 { font-size: 2.4rem; line-height: 1.15; margin: 0 0 12px; letter-spacing: -0.02em; }
+  h2 { font-size: 1.5rem; margin: 0 0 8px; letter-spacing: -0.01em; }
+  h3 { font-size: 1.05rem; margin: 0 0 6px; }
+  p  { margin: 0 0 14px; color: var(--text-secondary); max-width: 68ch; }
+  p strong, li strong { color: var(--text-primary); }
+  .kicker { text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px; }
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  a { color: var(--sg); }
+
+  /* ---- hero ---- */
+  header.hero { padding: 72px 0 40px; }
+  .hero-number { font-size: 64px; font-weight: 650; line-height: 1; margin: 24px 0 4px; }
+  .hero-number-label { color: var(--text-muted); font-size: 0.9rem; }
+
+  /* ---- stat tiles ---- */
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 20px; }
+  .tile .label { font-size: 0.82rem; color: var(--text-muted); }
+  .tile .value { font-size: 1.9rem; font-weight: 600; margin-top: 2px; }
+  .tile .delta { font-size: 0.82rem; color: var(--text-secondary); margin-top: 2px; }
+
+  /* ---- simulation ---- */
+  .sim-controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 16px 0 14px; }
+  button.primary {
+    background: var(--sg); color: #fff; border: 0; border-radius: 8px;
+    padding: 10px 18px; font-size: 0.95rem; font-weight: 600; cursor: pointer;
+    font-family: inherit;
+  }
+  button.primary:disabled { opacity: 0.45; cursor: default; }
+  button.ghost {
+    background: transparent; color: var(--text-secondary); border: 1px solid var(--border);
+    border-radius: 8px; padding: 9px 14px; font-size: 0.85rem; cursor: pointer; font-family: inherit;
+  }
+  .sim-clock { font-size: 0.85rem; color: var(--text-muted); margin-left: auto; }
+  .sim-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 720px) { .sim-grid { grid-template-columns: 1fr; } }
+  .sim-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .key-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em;
+    padding: 3px 10px; border-radius: 999px; margin-left: auto;
+    border: 1px solid var(--border); color: var(--text-primary);
+  }
+  .badge .icon { font-size: 0.8rem; line-height: 1; }
+  .sim-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
+  .sim-stat .label { font-size: 0.72rem; color: var(--text-muted); }
+  .sim-stat .value { font-size: 1.35rem; font-weight: 600; }
+  .log {
+    background: var(--page); border: 1px solid var(--border); border-radius: 8px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.72rem; line-height: 1.7; color: var(--text-secondary);
+    height: 132px; overflow-y: auto; padding: 8px 10px; margin: 0;
+  }
+  .log .day { color: var(--text-muted); }
+  .log .bad { color: var(--status-critical); }
+  .log .warn { color: var(--status-warning); }
+  .log .ok { color: var(--status-good); }
+  .note { font-size: 0.78rem; color: var(--text-muted); margin-top: 10px; }
+
+  /* ---- chart ---- */
+  .chart-card { position: relative; }
+  .chart-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .legend { display: flex; gap: 16px; margin: 10px 0 4px; font-size: 0.82rem; color: var(--text-secondary); flex-wrap: wrap; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
+  svg text { font-family: inherit; }
+  .tooltip {
+    position: absolute; pointer-events: none; display: none;
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 10px; font-size: 0.78rem; color: var(--text-secondary);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.18); min-width: 190px; z-index: 3;
+  }
+  .tooltip .t-title { color: var(--text-primary); font-weight: 600; margin-bottom: 4px; }
+  .tooltip .row { display: flex; align-items: center; gap: 6px; }
+  .tooltip .row b { margin-left: auto; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+  .tooltip .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  table.data { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 8px; }
+  table.data th, table.data td { text-align: right; padding: 6px 10px; border-bottom: 1px solid var(--grid); font-variant-numeric: tabular-nums; }
+  table.data th:first-child, table.data td:first-child { text-align: left; }
+  table.data th { color: var(--text-muted); font-weight: 500; }
+
+  /* ---- asymmetry table ---- */
+  table.asym { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  table.asym th, table.asym td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+  table.asym th { color: var(--text-muted); font-weight: 500; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; }
+  table.asym td { color: var(--text-secondary); }
+  table.asym td:first-child { color: var(--text-primary); font-weight: 600; }
+
+  /* ---- pipeline ---- */
+  .pipe { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; margin-top: 16px; }
+  .pipe .stage { flex: 1 1 150px; }
+  .pipe .stage .card { height: 100%; padding: 14px; }
+  .pipe .stage h3 { font-size: 0.9rem; }
+  .pipe .stage p { font-size: 0.78rem; margin: 0; }
+  .pipe .arrow { align-self: center; color: var(--text-muted); flex: none; }
+
+  footer { padding: 40px 0 64px; color: var(--text-muted); font-size: 0.85rem; border-top: 1px solid var(--grid); }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="kicker">Screen Ghost &middot; the UI is the API</div>
+    <h1>The cat-and-mouse ends here.</h1>
+    <p>
+      Page365 fought for years to give LINE sellers a stable frontend, reverse-engineering
+      protocols that the platform kept changing — sometimes specifically to lock integrators out.
+      Every break meant merchant downtime and engineer-weeks of catch-up. That war has a
+      structural exit, and it isn't a better adapter.
+    </p>
+    <div class="hero-number">1</div>
+    <div class="hero-number-label">the number of interfaces a platform cannot revoke: the one its paying customers use</div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">The bottleneck</div>
+    <h2>Every integration surface except one is revocable</h2>
+    <p>
+      APIs get deprecated, priced, and rate-limited. Reverse-engineered protocols get
+      detected and banned. DOMs churn weekly. Standards need every vendor to cooperate,
+      so they arrive late and partial. But the screen <em>is</em> the product — a platform
+      that breaks its own human interface breaks itself. Anything that operates at the
+      human interface, at human speed, on the official app, cannot be shut out without
+      shutting out the humans.
+    </p>
+    <div class="kpis">
+      <div class="card tile">
+        <div class="label">Recovery after a platform break — protocol adapter</div>
+        <div class="value">Days</div>
+        <div class="delta">reverse-engineer, rebuild, reship — while merchants wait</div>
+      </div>
+      <div class="card tile">
+        <div class="label">Recovery after a redesign — Screen Ghost</div>
+        <div class="value">Seconds</div>
+        <div class="delta">stale skill demoted, path re-derived from the live screen</div>
+      </div>
+      <div class="card tile">
+        <div class="label">Per-service adapter code to maintain</div>
+        <div class="value">0</div>
+        <div class="delta">the vision loop re-reads any screen, like a human after an update</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">Live simulation</div>
+    <h2>Ship a breaking change. Watch who goes down.</h2>
+    <p>
+      Two integrations process the same stream of merchant orders. Press the button to make
+      the platform ship a breaking change — a protocol change on the left, a UI redesign on
+      the right. Illustrative timings; one simulated day passes every 1.5&nbsp;seconds.
+    </p>
+    <div class="sim-controls">
+      <button class="primary" id="breakBtn">Platform ships a breaking change</button>
+      <button class="ghost" id="autoBtn" aria-pressed="false">Auto: break every 12 sim-days</button>
+      <span class="sim-clock">Day <span id="simDay">0</span></span>
+    </div>
+    <div class="sim-grid">
+      <div class="card" id="cardAdapter">
+        <div class="sim-head">
+          <span class="key-dot" style="background:var(--adapter)"></span>
+          <h3 style="margin:0">Protocol adapter <span style="color:var(--text-muted);font-weight:400">(the old way)</span></h3>
+          <span class="badge" id="badgeAdapter"><span class="icon">●</span><span class="txt">LIVE</span></span>
+        </div>
+        <div class="sim-stats">
+          <div class="sim-stat"><div class="label">Orders processed</div><div class="value" id="ordersAdapter">0</div></div>
+          <div class="sim-stat"><div class="label">Downtime (sim-days)</div><div class="value" id="downAdapter">0.0</div></div>
+        </div>
+        <pre class="log" id="logAdapter" aria-live="off"></pre>
+      </div>
+      <div class="card" id="cardSG">
+        <div class="sim-head">
+          <span class="key-dot" style="background:var(--sg)"></span>
+          <h3 style="margin:0">Screen Ghost <span style="color:var(--text-muted);font-weight:400">(semantic hands)</span></h3>
+          <span class="badge" id="badgeSG"><span class="icon">●</span><span class="txt">LIVE</span></span>
+        </div>
+        <div class="sim-stats">
+          <div class="sim-stat"><div class="label">Orders processed</div><div class="value" id="ordersSG">0</div></div>
+          <div class="sim-stat"><div class="label">Downtime (sim-days)</div><div class="value" id="downSG">0.0</div></div>
+        </div>
+        <pre class="log" id="logSG" aria-live="off"></pre>
+      </div>
+    </div>
+    <div class="note">
+      The left side must wait for humans to reverse-engineer the new protocol and ship a fix.
+      The right side treats the redesign as a cache miss: the stored skill goes stale, the vision
+      model re-derives the path from whatever the screen looks like now, and a fresh skill is saved.
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">The cost curve</div>
+    <div class="chart-card card">
+      <div class="chart-head">
+        <div>
+          <h2>Cumulative engineering cost of platform churn</h2>
+          <p style="margin:0;font-size:0.85rem">Engineer-days spent recovering, across 12 breaking changes (illustrative, ~2 years)</p>
+        </div>
+        <button class="ghost" id="tableBtn" style="margin-left:auto" aria-pressed="false">Table view</button>
+      </div>
+      <div class="legend" id="chartLegend">
+        <span><i style="background:var(--adapter)"></i>Protocol adapter</span>
+        <span><i style="background:var(--sg)"></i>Screen Ghost</span>
+      </div>
+      <div id="chartWrap" style="position:relative">
+        <svg id="chart" width="100%" viewBox="0 0 900 380" role="img" tabindex="0"
+             aria-label="Line chart: cumulative engineer-days lost to platform breaking changes. Protocol adapter climbs to 104 days after 12 breaks; Screen Ghost stays near 3 days. Arrow keys move the reading cursor; full data in the table view.">
+        </svg>
+        <div class="tooltip" id="tooltip"></div>
+      </div>
+      <div id="tableView" hidden></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">Why the platform can't win this one</div>
+    <h2>The asymmetry flips</h2>
+    <p>
+      Against a protocol adapter, the platform holds every advantage: change the wire format
+      Tuesday, the integrator scrambles Wednesday. Against hands on the official app, every
+      countermeasure gets crude — and starts injuring their own customers.
+    </p>
+    <div class="card" style="padding:6px 6px 2px">
+      <table class="asym">
+        <thead><tr><th scope="col">Platform's move</th><th scope="col">What it costs them</th><th scope="col">What it costs you</th></tr></thead>
+        <tbody>
+          <tr><td>Change the protocol / API</td><td>Nothing — routine release</td><td><strong>Nothing.</strong> There is no protocol client to break</td></tr>
+          <tr><td>Redesign the app UI</td><td>Design + retraining their own users</td><td>Seconds of re-derivation; skills re-learn</td></tr>
+          <tr><td>Detect &ldquo;automation-like&rdquo; behavior</td><td>False positives ban real paying merchants</td><td>Human-shaped pacing and jitter</td></tr>
+          <tr><td>Ban the account anyway</td><td>Revenue loss, support load, churn optics</td><td>The one fight left — and now it's expensive for <em>them</em></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">How it works</div>
+    <h2>Cache meaning, never pixels</h2>
+    <p>
+      A recorded tap-coordinate macro is a per-service adapter rebuilt one macro at a time —
+      the Page365 failure mode reborn. Screen Ghost skills store <strong>semantic waypoints</strong>
+      (&ldquo;tap the element labeled <em>Orders</em>&rdquo;), resolved against the live screen at
+      replay time. Churn costs speed, never capability. And the hands are local-only by design:
+      the actuation layer has no network surface, so there is no remote kill switch either.
+    </p>
+    <div class="pipe">
+      <div class="stage"><div class="card"><h3>Canonical intent</h3><p>&ldquo;Reply to order #4412&rdquo; — a stable vocabulary that never churns</p></div></div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="stage"><div class="card"><h3>Skill fast path</h3><p>Known label-anchored waypoints, resolved on today's screen</p></div></div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="stage"><div class="card"><h3>Stale? Re-derive</h3><p>Label gone → skill demoted → vision model re-reads the new UI</p></div></div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="stage"><div class="card"><h3>Local hands</h3><p>Taps on physically attached hardware — no remote surface, no revocation</p></div></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p style="color:var(--text-secondary)">
+      <strong style="color:var(--text-primary)">Screen Ghost</strong> — autonomous UI control and
+      state observation. No cloud. No API. No permission.
+      <a href="https://github.com/BigBirdReturns/ScreenGhost">github.com/BigBirdReturns/ScreenGhost</a>
+    </p>
+    <p>Simulation and cost figures are illustrative, drawn from the multi-protocol integration wars (Trillian vs. AOL, and every fight like it since).</p>
+  </div>
+</footer>
+
+<script>
+/* ============================== simulation ============================== */
+(function () {
+  const DAY_MS = 1500;          // one simulated day
+  const TICK_MS = 100;
+  const ORDERS_PER_DAY = 120;
+
+  const state = {
+    day: 0,
+    auto: false,
+    lastAutoBreak: 0,
+    adapter: { status: 'live', orders: 0, down: 0, fixEta: 0 },
+    sg:      { status: 'live', orders: 0, down: 0, fixEta: 0 },
+  };
+
+  const $ = id => document.getElementById(id);
+  const badges = { adapter: $('badgeAdapter'), sg: $('badgeSG') };
+  const logs = { adapter: $('logAdapter'), sg: $('logSG') };
+
+  function setBadge(which, status) {
+    const b = badges[which];
+    const map = {
+      live:      { icon: '●', txt: 'LIVE',        color: 'var(--status-good)' },
+      rederive:  { icon: '◐', txt: 'RE-DERIVING', color: 'var(--status-warning)' },
+      down:      { icon: '✕', txt: 'DOWN',        color: 'var(--status-critical)' },
+    };
+    const m = map[status];
+    b.querySelector('.icon').textContent = m.icon;
+    b.querySelector('.icon').style.color = m.color;
+    b.querySelector('.txt').textContent = m.txt;
+  }
+
+  function log(which, cls, msg) {
+    const el = logs[which];
+    const line = document.createElement('div');
+    line.innerHTML = '<span class="day">d' + state.day.toFixed(0).padStart(3, '0') + '</span> <span class="' + cls + '">' + msg + '</span>';
+    el.appendChild(line);
+    el.scrollTop = el.scrollHeight;
+    while (el.childNodes.length > 60) el.removeChild(el.firstChild);
+  }
+
+  let breakCount = 0;
+  function shipBreak() {
+    breakCount++;
+    // Protocol adapter: hard outage until engineers ship a fix (4–9 sim-days)
+    const fixDays = 4 + Math.random() * 5;
+    state.adapter.status = 'down';
+    state.adapter.fixEta = state.day + fixDays;
+    setBadge('adapter', 'down');
+    log('adapter', 'bad', 'break #' + breakCount + ': protocol changed — adapter dead');
+    log('adapter', 'warn', 'reverse-engineering… fix ETA ~' + fixDays.toFixed(1) + ' days');
+
+    // Screen Ghost: redesign = stale skill, re-derive in ~90s (0.001 sim-days ≈ 2s real)
+    state.sg.status = 'rederive';
+    state.sg.fixEta = state.day + 0.07; // ~90 simulated seconds
+    setBadge('sg', 'rederive');
+    log('sg', 'warn', 'break #' + breakCount + ': UI redesigned — skill stale (label not found)');
+    log('sg', 'warn', 'VLM re-deriving path from live screen…');
+  }
+
+  function tick() {
+    state.day += TICK_MS / DAY_MS;
+    $('simDay').textContent = Math.floor(state.day);
+
+    for (const which of ['adapter', 'sg']) {
+      const s = state[which];
+      if (s.status !== 'live') {
+        s.down += TICK_MS / DAY_MS;
+        if (state.day >= s.fixEta) {
+          s.status = 'live';
+          setBadge(which, 'live');
+          if (which === 'adapter') log(which, 'ok', 'fix shipped — adapter back online');
+          else { log(which, 'ok', 'path re-derived — new skill saved'); log(which, 'ok', 'processing resumed'); }
+        }
+      }
+      if (s.status === 'live') {
+        s.orders += (ORDERS_PER_DAY * TICK_MS / DAY_MS) * (0.8 + Math.random() * 0.4);
+      }
+      $(which === 'adapter' ? 'ordersAdapter' : 'ordersSG').textContent = Math.floor(s.orders).toLocaleString();
+      $(which === 'adapter' ? 'downAdapter' : 'downSG').textContent = s.down.toFixed(1);
+    }
+
+    if (state.auto && state.day - state.lastAutoBreak >= 12) {
+      state.lastAutoBreak = state.day;
+      shipBreak();
+    }
+  }
+
+  $('breakBtn').addEventListener('click', shipBreak);
+  $('autoBtn').addEventListener('click', function () {
+    state.auto = !state.auto;
+    state.lastAutoBreak = state.day;
+    this.setAttribute('aria-pressed', String(state.auto));
+    this.textContent = state.auto ? 'Auto: ON — breaking every 12 sim-days' : 'Auto: break every 12 sim-days';
+  });
+
+  setBadge('adapter', 'live'); setBadge('sg', 'live');
+  log('adapter', 'ok', 'adapter online — parsing reverse-engineered protocol');
+  log('sg', 'ok', 'observing official app — skills warm');
+  setInterval(tick, TICK_MS);
+})();
+
+/* ============================== cost chart ============================== */
+(function () {
+  // Cumulative engineer-days lost, per breaking change (illustrative)
+  const perBreakAdapter = [6, 8, 5, 12, 7, 6, 13, 6, 11, 8, 13, 9];
+  const DATA = perBreakAdapter.map((d, i) => ({
+    brk: i + 1,
+    adapter: perBreakAdapter.slice(0, i + 1).reduce((a, b) => a + b, 0),
+    sg: +((i + 1) * 0.25).toFixed(2), // a QA spot-check per break
+  }));
+
+  const svg = document.getElementById('chart');
+  const NS = 'http://www.w3.org/2000/svg';
+  const W = 900, H = 380, M = { top: 24, right: 170, bottom: 44, left: 56 };
+  const iw = W - M.left - M.right, ih = H - M.top - M.bottom;
+  const xMax = 12, yMax = 120;
+  const x = v => M.left + (v - 1) / (xMax - 1) * iw;
+  const y = v => M.top + ih - v / yMax * ih;
+
+  function el(name, attrs, parent) {
+    const e = document.createElementNS(NS, name);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    (parent || svg).appendChild(e);
+    return e;
+  }
+  function text(str, attrs, parent) {
+    const t = el('text', attrs, parent);
+    t.textContent = str;
+    return t;
+  }
+
+  // gridlines + y ticks (hairline, solid, recessive)
+  for (let v = 0; v <= yMax; v += 30) {
+    el('line', { x1: M.left, x2: M.left + iw, y1: y(v), y2: y(v), stroke: 'var(--grid)', 'stroke-width': 1 });
+    text(String(v), { x: M.left - 10, y: y(v) + 4, 'text-anchor': 'end', 'font-size': 12, fill: 'var(--text-muted)', style: 'font-variant-numeric: tabular-nums' });
+  }
+  // baseline + x ticks
+  el('line', { x1: M.left, x2: M.left + iw, y1: y(0), y2: y(0), stroke: 'var(--axis)', 'stroke-width': 1 });
+  for (let b = 1; b <= xMax; b++) {
+    text(String(b), { x: x(b), y: M.top + ih + 20, 'text-anchor': 'middle', 'font-size': 12, fill: 'var(--text-muted)' });
+  }
+  text('platform breaking change #', { x: M.left + iw / 2, y: H - 6, 'text-anchor': 'middle', 'font-size': 12, fill: 'var(--text-muted)' });
+  text('engineer-days (cumulative)', { x: M.left, y: 14, 'font-size': 12, fill: 'var(--text-muted)' });
+
+  // series lines (2px, round) + end markers (r=4 + 2px surface ring)
+  const series = [
+    { key: 'adapter', color: 'var(--adapter)', label: 'Protocol adapter' },
+    { key: 'sg', color: 'var(--sg)', label: 'Screen Ghost' },
+  ];
+  for (const s of series) {
+    const pts = DATA.map(d => x(d.brk) + ',' + y(d[s.key])).join(' ');
+    el('polyline', { points: pts, fill: 'none', stroke: s.color, 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' });
+    const last = DATA[DATA.length - 1];
+    el('circle', { cx: x(12), cy: y(last[s.key]), r: 6, fill: 'var(--surface-1)' });
+    el('circle', { cx: x(12), cy: y(last[s.key]), r: 4, fill: s.color });
+    // direct end label: identity via the line+dot; text wears ink, not series color
+    const g = el('g', {});
+    text(s.label, { x: x(12) + 12, y: y(last[s.key]) - 2, 'font-size': 12.5, 'font-weight': 600, fill: 'var(--text-primary)' }, g);
+    text(last[s.key] + ' days', { x: x(12) + 12, y: y(last[s.key]) + 13, 'font-size': 12, fill: 'var(--text-secondary)', style: 'font-variant-numeric: tabular-nums' }, g);
+  }
+
+  // hover layer: crosshair + tooltip; keyboard arrows mirror hover
+  const cross = el('line', { y1: M.top, y2: M.top + ih, stroke: 'var(--axis)', 'stroke-width': 1, visibility: 'hidden' });
+  const hoverDots = series.map(s => el('circle', { r: 5, fill: s.color, stroke: 'var(--surface-1)', 'stroke-width': 2, visibility: 'hidden' }));
+  const tip = document.getElementById('tooltip');
+  const wrapEl = document.getElementById('chartWrap');
+  let focusIdx = -1;
+
+  function show(idx, clientX) {
+    const d = DATA[idx];
+    cross.setAttribute('x1', x(d.brk)); cross.setAttribute('x2', x(d.brk));
+    cross.setAttribute('visibility', 'visible');
+    series.forEach((s, i) => {
+      hoverDots[i].setAttribute('cx', x(d.brk));
+      hoverDots[i].setAttribute('cy', y(d[s.key]));
+      hoverDots[i].setAttribute('visibility', 'visible');
+    });
+    tip.innerHTML =
+      '<div class="t-title">Breaking change #' + d.brk + '</div>' +
+      '<div class="row"><span class="dot" style="background:var(--adapter)"></span>Protocol adapter <b>' + d.adapter + ' days</b></div>' +
+      '<div class="row"><span class="dot" style="background:var(--sg)"></span>Screen Ghost <b>' + d.sg + ' days</b></div>';
+    tip.style.display = 'block';
+    const r = wrapEl.getBoundingClientRect();
+    const svgX = (x(d.brk) / W) * r.width;
+    const left = Math.min(Math.max(svgX + 14, 0), r.width - tip.offsetWidth - 4);
+    tip.style.left = left + 'px';
+    tip.style.top = '30px';
+  }
+  function hide() {
+    cross.setAttribute('visibility', 'hidden');
+    hoverDots.forEach(d => d.setAttribute('visibility', 'hidden'));
+    tip.style.display = 'none';
+    focusIdx = -1;
+  }
+  svg.addEventListener('mousemove', ev => {
+    const r = svg.getBoundingClientRect();
+    const px = (ev.clientX - r.left) / r.width * W;
+    let best = 0, bestD = Infinity;
+    DATA.forEach((d, i) => { const dd = Math.abs(x(d.brk) - px); if (dd < bestD) { bestD = dd; best = i; } });
+    show(best, ev.clientX);
+  });
+  svg.addEventListener('mouseleave', hide);
+  svg.addEventListener('keydown', ev => {
+    if (ev.key === 'ArrowRight') { focusIdx = Math.min(DATA.length - 1, focusIdx + 1); show(focusIdx); ev.preventDefault(); }
+    if (ev.key === 'ArrowLeft')  { focusIdx = Math.max(0, focusIdx <= 0 ? 0 : focusIdx - 1); show(focusIdx); ev.preventDefault(); }
+    if (ev.key === 'Escape') hide();
+  });
+  svg.addEventListener('blur', hide);
+
+  // table view — the WCAG-clean twin
+  const tbl = document.getElementById('tableView');
+  tbl.innerHTML = '<table class="data"><thead><tr><th scope="col">Breaking change</th><th scope="col">Protocol adapter (cum. eng-days)</th><th scope="col">Screen Ghost (cum. eng-days)</th></tr></thead><tbody>' +
+    DATA.map(d => '<tr><td>#' + d.brk + '</td><td>' + d.adapter + '</td><td>' + d.sg + '</td></tr>').join('') +
+    '</tbody></table>';
+  document.getElementById('tableBtn').addEventListener('click', function () {
+    const showTable = tbl.hidden;
+    tbl.hidden = !showTable;
+    wrapEl.style.display = showTable ? 'none' : '';
+    document.getElementById('chartLegend').style.display = showTable ? 'none' : '';
+    this.setAttribute('aria-pressed', String(showTable));
+    this.textContent = showTable ? 'Chart view' : 'Table view';
+  });
+})();
+</script>
+</body>
+</html>
