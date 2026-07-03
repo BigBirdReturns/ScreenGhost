@@ -303,6 +303,14 @@ sqlite3 log/screenghost.db "SELECT * FROM steps WHERE run_id = 1"
 - **Slow on CPU**: 3-5 seconds per step without GPU
 - **No safety rails**: No policy engine yet—don't point it at anything dangerous
 
+These are the small-print caveats. The **architectural** limits — where the
+"UI is the API" thesis holds and where it breaks (complex scripts like Thai,
+non-text payloads, real-time concurrency, and the local-hands-vs-hosted-scale
+contradiction) — are documented honestly in
+[`docs/vision-model-limitations.md`](docs/vision-model-limitations.md). Read it
+before assuming this scales to high-volume, multilingual, hosted messaging: it
+does not, and the gap is structural, not a roadmap item.
+
 ## License
 
 MIT
