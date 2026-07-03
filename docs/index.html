@@ -3,645 +3,370 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Screen Ghost — Evidence Kernel</title>
-<meta name="description" content="Screen Ghost decomposes the 'the UI can't be the API' objection into tested categories, receipts, and explicitly frozen claims. No hardware, live-seller, or business proof claimed.">
+<title>ScreenGhost — reviewable order ledger from seller screen state</title>
+<meta name="description" content="ScreenGhost turns messy seller chats into a reviewable order ledger: exact text capture, proposed order events, human correction, export, and replay. A local evidence kernel with claim boundaries enforced by receipts.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%91%BB%3C/text%3E%3C/svg%3E">
 <style>
-  :root {
-    --page:        #f9f9f7;
-    --surface-1:   #fcfcfb;
-    --text-primary:#0b0b0b;
-    --text-secondary:#52514e;
-    --text-muted:  #898781;
-    --grid:        #e1e0d9;
-    --axis:        #c3c2b7;
-    --border:      rgba(11,11,11,0.10);
-    --sg:          #2a78d6;   /* Screen Ghost — categorical slot 1 (blue) */
-    --adapter:     #eda100;   /* Protocol adapter — categorical slot 3 (yellow) */
-    --status-good:     #0ca30c;
-    --status-warning:  #fab219;
-    --status-critical: #d03b3b;
+  :root{
+    --bg:#fbfbfd; --surface:#ffffff; --surface-2:#f4f5f8;
+    --ink:#0d1117; --muted:#5b6472; --faint:#8b93a1;
+    --border:rgba(13,17,23,.10); --grid:rgba(13,17,23,.06);
+    --accent:#6b4eff; --accent-2:#0d9488; --good:#0f9d58; --warn:#d68a00; --bad:#d0453b;
+    --mono:ui-monospace,SFMono-Regular,Menlo,"Cascadia Code",monospace;
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --page:        #0d0d0d;
-      --surface-1:   #1a1a19;
-      --text-primary:#ffffff;
-      --text-secondary:#c3c2b7;
-      --text-muted:  #898781;
-      --grid:        #2c2c2a;
-      --axis:        #383835;
-      --border:      rgba(255,255,255,0.10);
-      --sg:          #3987e5;
-      --adapter:     #c98500;
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0b0e14; --surface:#131824; --surface-2:#0f1420;
+      --ink:#e6edf3; --muted:#9aa4b2; --faint:#6b7482;
+      --border:rgba(255,255,255,.10); --grid:rgba(255,255,255,.06);
+      --accent:#8b7cff; --accent-2:#2dd4bf; --good:#3fb950; --warn:#e3a008; --bad:#f0574d;
     }
   }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    background: var(--page);
-    color: var(--text-primary);
-    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-    line-height: 1.55;
-  }
-  .wrap { max-width: 960px; margin: 0 auto; padding: 0 24px; }
-  section { padding: 48px 0; }
-  h1 { font-size: 2.4rem; line-height: 1.15; margin: 0 0 12px; letter-spacing: -0.02em; }
-  h2 { font-size: 1.5rem; margin: 0 0 8px; letter-spacing: -0.01em; }
-  h3 { font-size: 1.05rem; margin: 0 0 6px; }
-  p  { margin: 0 0 14px; color: var(--text-secondary); max-width: 68ch; }
-  p strong, li strong { color: var(--text-primary); }
-  .kicker { text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px; }
-  .card {
-    background: var(--surface-1);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 20px;
-  }
-  a { color: var(--sg); }
-
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);line-height:1.55;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+    -webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+  .wrap{max-width:1020px;margin:0 auto;padding:0 22px}
+  section{padding:56px 0;border-top:1px solid var(--grid)}
+  h1{font-size:2.7rem;line-height:1.08;letter-spacing:-.03em;margin:0 0 16px}
+  h2{font-size:1.6rem;letter-spacing:-.02em;margin:0 0 10px}
+  h3{font-size:1.02rem;margin:0 0 6px}
+  p{color:var(--muted);margin:0 0 14px;max-width:64ch}
+  .kicker{text-transform:uppercase;letter-spacing:.14em;font-size:.72rem;
+    color:var(--faint);margin-bottom:12px;font-weight:600}
+  .btn{display:inline-flex;align-items:center;gap:8px;border-radius:9px;
+    padding:11px 18px;font-weight:600;font-size:.95rem;cursor:pointer;border:1px solid transparent}
+  .btn.primary{background:var(--accent);color:#fff}
+  .btn.ghost{background:transparent;color:var(--ink);border-color:var(--border)}
+  .btn.ghost:hover{background:var(--surface-2);text-decoration:none}
+  .btn.primary:hover{filter:brightness(1.06);text-decoration:none}
+  .row{display:flex;flex-wrap:wrap;gap:10px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:22px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px}
+  .card h3{display:flex;align-items:center;gap:8px}
+  .dot{width:9px;height:9px;border-radius:50%;flex:none}
+  .muted{color:var(--muted)}.small{font-size:.85rem}
+  code,.mono{font-family:var(--mono)}
+  /* ---- top bar ---- */
+  header.top{position:sticky;top:0;z-index:10;backdrop-filter:saturate(1.4) blur(8px);
+    background:color-mix(in srgb,var(--bg) 82%,transparent);border-bottom:1px solid var(--grid)}
+  .top .wrap{display:flex;align-items:center;gap:14px;padding-top:12px;padding-bottom:12px}
+  .brand{font-weight:750;letter-spacing:-.02em;display:flex;align-items:center;gap:8px}
+  .brand .g{font-size:1.15rem}
+  .top nav{margin-left:auto;display:flex;gap:18px;font-size:.9rem}
+  .top nav a{color:var(--muted)}.top nav a:hover{color:var(--ink)}
+  @media(max-width:680px){.top nav{display:none}}
   /* ---- hero ---- */
-  header.hero { padding: 72px 0 40px; }
-  .hero-number { font-size: 64px; font-weight: 650; line-height: 1; margin: 24px 0 4px; }
-  .hero-number-label { color: var(--text-muted); font-size: 0.9rem; }
-
-  /* ---- stat tiles ---- */
-  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 20px; }
-  .tile .label { font-size: 0.82rem; color: var(--text-muted); }
-  .tile .value { font-size: 1.9rem; font-weight: 600; margin-top: 2px; }
-  .tile .delta { font-size: 0.82rem; color: var(--text-secondary); margin-top: 2px; }
-
-  /* ---- simulation ---- */
-  .sim-controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 16px 0 14px; }
-  button.primary {
-    background: var(--sg); color: #fff; border: 0; border-radius: 8px;
-    padding: 10px 18px; font-size: 0.95rem; font-weight: 600; cursor: pointer;
-    font-family: inherit;
-  }
-  button.primary:disabled { opacity: 0.45; cursor: default; }
-  button.ghost {
-    background: transparent; color: var(--text-secondary); border: 1px solid var(--border);
-    border-radius: 8px; padding: 9px 14px; font-size: 0.85rem; cursor: pointer; font-family: inherit;
-  }
-  .sim-clock { font-size: 0.85rem; color: var(--text-muted); margin-left: auto; }
-  .sim-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  /* grid items default to min-width:auto, so the unwrapped log lines
-     would otherwise set the cards' minimum width and force the whole
-     page to scroll sideways on phones */
-  .sim-grid > .card { min-width: 0; }
-  @media (max-width: 720px) { .sim-grid { grid-template-columns: 1fr; } }
-  .sim-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-  .key-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
-  .badge {
-    display: inline-flex; align-items: center; gap: 6px;
-    font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em;
-    padding: 3px 10px; border-radius: 999px; margin-left: auto;
-    border: 1px solid var(--border); color: var(--text-primary);
-  }
-  .badge .icon { font-size: 0.8rem; line-height: 1; }
-  .sim-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
-  .sim-stat .label { font-size: 0.72rem; color: var(--text-muted); }
-  .sim-stat .value { font-size: 1.35rem; font-weight: 600; }
-  .log {
-    background: var(--page); border: 1px solid var(--border); border-radius: 8px;
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: 0.72rem; line-height: 1.7; color: var(--text-secondary);
-    height: 132px; overflow-y: auto; overflow-x: auto; padding: 8px 10px; margin: 0;
-  }
-  .log .day { color: var(--text-muted); }
-  .log .bad { color: var(--status-critical); }
-  .log .warn { color: var(--status-warning); }
-  .log .ok { color: var(--status-good); }
-  .note { font-size: 0.78rem; color: var(--text-muted); margin-top: 10px; }
-
-  /* ---- chart ---- */
-  .chart-card { position: relative; }
-  .chart-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-  .legend { display: flex; gap: 16px; margin: 10px 0 4px; font-size: 0.82rem; color: var(--text-secondary); flex-wrap: wrap; }
-  .legend span { display: inline-flex; align-items: center; gap: 6px; }
-  .legend i { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
-  svg text { font-family: inherit; }
-  .tooltip {
-    position: absolute; pointer-events: none; display: none;
-    background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px;
-    padding: 8px 10px; font-size: 0.78rem; color: var(--text-secondary);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.18); min-width: 190px; z-index: 3;
-  }
-  .tooltip .t-title { color: var(--text-primary); font-weight: 600; margin-bottom: 4px; }
-  .tooltip .row { display: flex; align-items: center; gap: 6px; }
-  .tooltip .row b { margin-left: auto; color: var(--text-primary); font-variant-numeric: tabular-nums; }
-  .tooltip .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
-  table.data { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 8px; }
-  table.data th, table.data td { text-align: right; padding: 6px 10px; border-bottom: 1px solid var(--grid); font-variant-numeric: tabular-nums; }
-  table.data th:first-child, table.data td:first-child { text-align: left; }
-  table.data th { color: var(--text-muted); font-weight: 500; }
-
-  /* ---- asymmetry table ---- */
-  /* on narrow phones the three columns can't fit; scroll the table inside
-     its card instead of letting it drag the whole page sideways */
-  .asym-scroll { overflow-x: auto; }
-  table.asym { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
-  table.asym th, table.asym td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--grid); vertical-align: top; }
-  table.asym th { color: var(--text-muted); font-weight: 500; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; }
-  table.asym td { color: var(--text-secondary); }
-  table.asym td:first-child { color: var(--text-primary); font-weight: 600; }
-
-  /* ---- pipeline ---- */
-  .pipe { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; margin-top: 16px; }
-  .pipe .stage { flex: 1 1 150px; }
-  .pipe .stage .card { height: 100%; padding: 14px; }
-  .pipe .stage h3 { font-size: 0.9rem; }
-  .pipe .stage p { font-size: 0.78rem; margin: 0; }
-  .pipe .arrow { align-self: center; color: var(--text-muted); flex: none; }
-
-  footer { padding: 40px 0 64px; color: var(--text-muted); font-size: 0.85rem; border-top: 1px solid var(--grid); }
+  .hero{padding:64px 0 44px}
+  .hero .lede{max-width:60ch;font-size:1.12rem}
+  .badge{display:inline-flex;align-items:center;gap:7px;font-size:.78rem;font-weight:600;
+    padding:5px 12px;border-radius:999px;border:1px solid var(--border);color:var(--muted);margin-bottom:18px}
+  /* ---- product mock ---- */
+  .mock{margin-top:34px;background:var(--surface);border:1px solid var(--border);
+    border-radius:16px;overflow:hidden;box-shadow:0 18px 50px -30px rgba(0,0,0,.5)}
+  .mock .bar{display:flex;align-items:center;gap:8px;padding:11px 15px;border-bottom:1px solid var(--border);
+    background:var(--surface-2);font-size:.82rem;color:var(--muted)}
+  .mock .bar .tl{display:flex;gap:6px}.mock .bar .tl i{width:11px;height:11px;border-radius:50%;background:var(--border)}
+  .mock .body{display:grid;grid-template-columns:1.05fr 1fr;gap:0}
+  @media(max-width:720px){.mock .body{grid-template-columns:1fr}}
+  .inbox{border-right:1px solid var(--border);padding:6px 0}
+  @media(max-width:720px){.inbox{border-right:0;border-bottom:1px solid var(--border)}}
+  .grp{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);
+    padding:8px 16px 4px}
+  .ev{padding:8px 16px;display:flex;align-items:center;gap:9px;font-size:.86rem}
+  .st{font-size:.64rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;
+    padding:2px 7px;border-radius:6px;white-space:nowrap}
+  .st.acc{background:color-mix(in srgb,var(--good) 16%,transparent);color:var(--good)}
+  .st.ni{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+  .st.cor{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)}
+  .st.rej{background:color-mix(in srgb,var(--bad) 15%,transparent);color:var(--bad)}
+  .st.pro{background:var(--surface-2);color:var(--muted)}
+  .detail{padding:16px 18px}
+  .detail .lbl{font-size:.66rem;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);margin:12px 0 4px}
+  .raw{font-family:var(--mono);font-size:.9rem;background:var(--surface-2);border:1px solid var(--border);
+    border-radius:8px;padding:9px 11px}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;font-size:.86rem}
+  .kv b{font-weight:600}.kv .v{color:var(--muted);font-family:var(--mono)}
+  .foot{padding:9px 16px;border-top:1px solid var(--border);font-size:.72rem;color:var(--faint);
+    font-family:var(--mono);display:flex;flex-wrap:wrap;gap:12px}
+  /* ---- flow ---- */
+  .flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;margin-top:22px}
+  .flow .step{flex:1 1 120px;background:var(--surface);border:1px solid var(--border);
+    border-radius:11px;padding:12px 13px;font-size:.85rem}
+  .flow .step b{display:block;font-size:.9rem;margin-bottom:2px}
+  .flow .arr{align-self:center;color:var(--faint)}
+  /* ---- receipt ---- */
+  .term{background:#0b0e14;color:#c9d3df;border:1px solid var(--border);border-radius:12px;
+    font-family:var(--mono);font-size:.83rem;padding:16px 18px;overflow-x:auto}
+  .term .p{color:#3fb950}.term .cmd{color:#e6edf3}.term .c{color:#6b7482}
+  .ok{color:#3fb950;font-weight:700}
+  /* ---- boundary ---- */
+  .bound{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--warn);
+    border-radius:12px;padding:18px 20px}
+  .bound ul{margin:8px 0 0;padding-left:20px;color:var(--muted)}
+  .bound li{margin:3px 0}
+  /* ---- chips ---- */
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .chip{font-family:var(--mono);font-size:.78rem;padding:5px 11px;border-radius:999px;
+    border:1px solid var(--border);background:var(--surface-2);color:var(--muted)}
+  /* ---- run block ---- */
+  pre.run{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+    padding:16px 18px;overflow-x:auto;font-family:var(--mono);font-size:.83rem;color:var(--ink);margin:0}
+  pre.run .c{color:var(--faint)}
+  /* ---- routes ---- */
+  .routes{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-top:18px}
+  .route{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:14px 16px}
+  .route b{font-family:var(--mono);font-size:.86rem}
+  footer{padding:40px 0 60px;color:var(--faint);font-size:.85rem;border-top:1px solid var(--grid)}
 </style>
 </head>
 <body>
 
-<header class="hero">
+<header class="top">
   <div class="wrap">
-    <div class="kicker">Screen Ghost &middot; the UI is the API</div>
-    <h1>The objection, decomposed.</h1>
-    <p>
-      "The UI can't be the API — Thai is unreliable, vision is slow, payloads are
-      complex, it won't scale, IPs get blocked, users lack infrastructure." That was
-      one impossibility verdict bundling many separable problems. Screen Ghost doesn't
-      argue it. It splits it into categories that are each <em>tested</em>, receipted,
-      or explicitly frozen — so a remaining objection has to arrive as a failing
-      fixture, a resolver case, or a product issue.
-    </p>
-    <div class="hero-number">1</div>
-    <div class="hero-number-label">the durable interface a platform cannot revoke: the one its paying customers use</div>
-    <p style="font-size:0.82rem;color:var(--text-muted);margin-top:14px">
-      Not hardware proof. Not live-seller proof. Not business proof. See
-      <a href="https://github.com/BigBirdReturns/ScreenGhost/blob/main/docs/CLAIM_BOUNDARIES.md">CLAIM_BOUNDARIES.md</a>.
-    </p>
+    <span class="brand"><span class="g">👻</span> ScreenGhost</span>
+    <nav>
+      <a href="#what">What it does</a>
+      <a href="#proven">Proven</a>
+      <a href="#boundaries">Not claimed</a>
+      <a href="#adapters">Adapters</a>
+      <a href="#run">Run it</a>
+      <a href="https://github.com/BigBirdReturns/ScreenGhost">GitHub</a>
+    </nav>
   </div>
 </header>
 
-<section>
-  <div class="wrap">
-    <div class="kicker">The bottleneck</div>
-    <h2>Every integration surface except one is revocable</h2>
-    <p>
-      APIs get deprecated, priced, and rate-limited. Reverse-engineered protocols get
-      detected and banned. DOMs churn weekly. Standards need every vendor to cooperate,
-      so they arrive late and partial. But the screen <em>is</em> the product — a platform
-      that breaks its own human interface breaks itself. Anything that operates at the
-      human interface, at human speed, on the official app, cannot be shut out without
-      shutting out the humans.
-    </p>
-    <div class="kpis">
-      <div class="card tile">
-        <div class="label">Recovery after a platform break — protocol adapter</div>
-        <div class="value">Days</div>
-        <div class="delta">reverse-engineer, rebuild, reship — while merchants wait</div>
-      </div>
-      <div class="card tile">
-        <div class="label">Recovery after a redesign — Screen Ghost</div>
-        <div class="value">Seconds</div>
-        <div class="delta">stale skill demoted, path re-derived from the live screen</div>
-      </div>
-      <div class="card tile">
-        <div class="label">Per-service adapter code to maintain</div>
-        <div class="value">0</div>
-        <div class="delta">the vision loop re-reads any screen, like a human after an update</div>
-      </div>
-    </div>
+<!-- ============================ HERO ============================ -->
+<div class="wrap hero">
+  <span class="badge">👻 Local evidence kernel · v0.1</span>
+  <h1>Messy seller chats,<br>turned into a reviewable order ledger.</h1>
+  <p class="lede">
+    ScreenGhost reads seller screen state as <strong>exact text</strong> — no OCR on the
+    text path — proposes structured order events, lets a human correct the ambiguous ones,
+    then exports and <strong>replays</strong> the ledger. Built as a local kernel with
+    claim boundaries enforced by receipts, not slides.
+  </p>
+  <div class="row" style="margin-top:20px">
+    <a class="btn primary" href="#run">▶ Run the release verifier</a>
+    <a class="btn ghost" href="https://github.com/BigBirdReturns/ScreenGhost/blob/main/examples/receipts/operator_demo_seed_op.txt">View demo receipt</a>
+    <a class="btn ghost" href="#adapters">Run adapter conformance</a>
+    <a class="btn ghost" href="https://github.com/BigBirdReturns/ScreenGhost/blob/main/docs/CLAIM_BOUNDARIES.md">Read claim boundaries</a>
   </div>
-</section>
+  <p class="small muted" style="margin-top:12px">
+    A local kernel, not a hosted service — no signup, no accounts. You run it.
+  </p>
 
-<section>
-  <div class="wrap">
-    <div class="kicker">Live simulation</div>
-    <h2>Ship a breaking change. Watch who goes down.</h2>
-    <p>
-      Two integrations process the same stream of merchant orders. Press the button to make
-      the platform ship a breaking change — a protocol change on the left, a UI redesign on
-      the right. Illustrative timings; one simulated day passes every 1.5&nbsp;seconds.
-    </p>
-    <div class="sim-controls">
-      <button class="primary" id="breakBtn">Platform ships a breaking change</button>
-      <button class="ghost" id="autoBtn" aria-pressed="false">Auto: break every 12 sim-days</button>
-      <span class="sim-clock">Day <span id="simDay">0</span></span>
-    </div>
-    <div class="sim-grid">
-      <div class="card" id="cardAdapter">
-        <div class="sim-head">
-          <span class="key-dot" style="background:var(--adapter)"></span>
-          <h3 style="margin:0">Protocol adapter <span style="color:var(--text-muted);font-weight:400">(the old way)</span></h3>
-          <span class="badge" id="badgeAdapter"><span class="icon">●</span><span class="txt">LIVE</span></span>
+  <!-- product mock: the actual reviewable order ledger UI, from demo data -->
+  <div class="mock" role="img" aria-label="Reviewable order ledger: an inbox of order events grouped by status, and a detail panel showing an exact Thai message beside its parsed order fields.">
+    <div class="bar"><span class="tl"><i></i><i></i><i></i></span>
+      &nbsp;ScreenGhost — Reviewable Order Ledger · seller: bakery-demo</div>
+    <div class="body">
+      <div class="inbox">
+        <div class="grp">accepted</div>
+        <div class="ev"><span class="st acc">accepted</span> Nok — <b>C01</b> ×2 <span class="muted small">order · 0.90</span></div>
+        <div class="ev"><span class="st acc">accepted</span> Ann — <b>C02</b> ×1 <span class="muted small">order · 0.90</span></div>
+        <div class="grp">needs info</div>
+        <div class="ev"><span class="st ni">needs_info</span> Aum — <b>D01</b> ×1 <span class="muted small">variant missing</span></div>
+        <div class="grp">corrected</div>
+        <div class="ev"><span class="st cor">corrected</span> Bee — <b>A01</b> ×1 <span class="muted small">sku fixed</span></div>
+        <div class="grp">rejected</div>
+        <div class="ev"><span class="st rej">rejected</span> Fon — <b>?</b> <span class="muted small">CF CF (no item)</span></div>
+        <div class="grp">proposed</div>
+        <div class="ev"><span class="st pro">proposed</span> Nan — sticker <span class="muted small">payload · not an order</span></div>
+      </div>
+      <div class="detail">
+        <div class="lbl">raw capture — exact Unicode, no OCR</div>
+        <div class="raw">CF C01 x2 ตัว ค่ะ</div>
+        <div class="lbl">parsed order event</div>
+        <div class="kv">
+          <b>buyer</b><span class="v">Nok</span>
+          <b>sku</b><span class="v">C01</span>
+          <b>qty</b><span class="v">2</span>
+          <b>type</b><span class="v">order</span>
+          <b>status</b><span class="v">accepted</span>
+          <b>confidence</b><span class="v">0.90</span>
+          <b>parser</b><span class="v">view_tree</span>
         </div>
-        <div class="sim-stats">
-          <div class="sim-stat"><div class="label">Orders processed</div><div class="value" id="ordersAdapter">0</div></div>
-          <div class="sim-stat"><div class="label">Downtime (sim-days)</div><div class="value" id="downAdapter">0.0</div></div>
-        </div>
-        <pre class="log" id="logAdapter" aria-live="off"></pre>
-      </div>
-      <div class="card" id="cardSG">
-        <div class="sim-head">
-          <span class="key-dot" style="background:var(--sg)"></span>
-          <h3 style="margin:0">Screen Ghost <span style="color:var(--text-muted);font-weight:400">(semantic hands)</span></h3>
-          <span class="badge" id="badgeSG"><span class="icon">●</span><span class="txt">LIVE</span></span>
-        </div>
-        <div class="sim-stats">
-          <div class="sim-stat"><div class="label">Orders processed</div><div class="value" id="ordersSG">0</div></div>
-          <div class="sim-stat"><div class="label">Downtime (sim-days)</div><div class="value" id="downSG">0.0</div></div>
-        </div>
-        <pre class="log" id="logSG" aria-live="off"></pre>
+        <div class="lbl">append-only history</div>
+        <div class="small muted mono">proposed → accepted (human) · raw capture immutable</div>
       </div>
     </div>
-    <div class="note">
-      The left side must wait for humans to reverse-engineer the new protocol and ship a fix.
-      The right side treats the redesign as a cache miss: the stored skill goes stale, the vision
-      model re-derives the path from whatever the screen looks like now, and a fresh skill is saved.
+    <div class="foot"><span>export → orders.csv</span><span>replay matched: true</span><span>schema v1</span></div>
+  </div>
+</div>
+
+<!-- ============================ WHAT IT DOES ============================ -->
+<section id="what">
+  <div class="wrap">
+    <div class="kicker">What it does</div>
+    <h2>Capture, review, and prove — one boring pipeline</h2>
+    <div class="cards">
+      <div class="card">
+        <h3><span class="dot" style="background:var(--accent-2)"></span>Capture candidates</h3>
+        <p>Read the surface as text, not pixels. Exact Unicode (Thai stays exact),
+          a source-snapshot hash, and dedupe keys per candidate. The adapter emits
+          <em>candidates</em> — never order events.</p>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--accent)"></span>Review orders</h3>
+        <p>OrderBook proposes events. A missing required variant becomes
+          <code>proposed_incomplete</code>, never a hallucinated order. Humans correct
+          buyer/SKU/qty/variant; every action is an append-only correction or transition.</p>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--good)"></span>Prove the ledger</h3>
+        <p>Export orders, corrections, captures, and a receipt. Replay the ledger from
+          captures + corrections alone and confirm it reproduces. Same seed → same
+          numbers, in any process.</p>
+      </div>
     </div>
   </div>
 </section>
 
+<!-- ============================ FLOW ============================ -->
 <section>
   <div class="wrap">
-    <div class="kicker">The cost curve</div>
-    <div class="chart-card card">
-      <div class="chart-head">
-        <div>
-          <h2>Cumulative engineering cost of platform churn</h2>
-          <p style="margin:0;font-size:0.85rem">Engineer-days spent recovering, across 12 breaking changes (illustrative, ~2 years)</p>
-        </div>
-        <button class="ghost" id="tableBtn" style="margin-left:auto" aria-pressed="false">Table view</button>
-      </div>
-      <div class="legend" id="chartLegend">
-        <span><i style="background:var(--adapter)"></i>Protocol adapter</span>
-        <span><i style="background:var(--sg)"></i>Screen Ghost</span>
-      </div>
-      <div id="chartWrap" style="position:relative">
-        <svg id="chart" width="100%" viewBox="0 0 900 380" role="img" tabindex="0"
-             aria-label="Line chart: cumulative engineer-days lost to platform breaking changes. Protocol adapter climbs to 104 days after 12 breaks; Screen Ghost stays near 3 days. Arrow keys move the reading cursor; full data in the table view.">
-        </svg>
-        <div class="tooltip" id="tooltip"></div>
-      </div>
-      <div id="tableView" hidden></div>
+    <div class="kicker">How the flow works</div>
+    <h2>Screen state to a replayable ledger</h2>
+    <div class="flow">
+      <div class="step"><b>Screen state</b><span class="muted">the live seller surface</span></div>
+      <span class="arr">→</span>
+      <div class="step"><b>Candidates</b><span class="muted">exact text, bounds, dedupe</span></div>
+      <span class="arr">→</span>
+      <div class="step"><b>Proposed events</b><span class="muted">OrderBook, not the adapter</span></div>
+      <span class="arr">→</span>
+      <div class="step"><b>Human correction</b><span class="muted">append-only</span></div>
+      <span class="arr">→</span>
+      <div class="step"><b>Ledger</b><span class="muted">accepted orders</span></div>
+      <span class="arr">→</span>
+      <div class="step"><b>Export → Replay</b><span class="muted">reproduces</span></div>
     </div>
   </div>
 </section>
 
-<section>
+<!-- ============================ PROVEN ============================ -->
+<section id="proven">
   <div class="wrap">
-    <div class="kicker">Why the platform can't win this one</div>
-    <h2>The asymmetry flips</h2>
-    <p>
-      Against a protocol adapter, the platform holds every advantage: change the wire format
-      Tuesday, the integrator scrambles Wednesday. Against hands on the official app, every
-      countermeasure gets crude — and starts injuring their own customers.
-    </p>
-    <div class="card asym-scroll" style="padding:6px 6px 2px">
-      <table class="asym">
-        <thead><tr><th scope="col">Platform's move</th><th scope="col">What it costs them</th><th scope="col">What it costs you</th></tr></thead>
-        <tbody>
-          <tr><td>Change the protocol / API</td><td>Nothing — routine release</td><td><strong>Nothing.</strong> There is no protocol client to break</td></tr>
-          <tr><td>Redesign the app UI</td><td>Design + retraining their own users</td><td>Seconds of re-derivation; skills re-learn</td></tr>
-          <tr><td>Detect &ldquo;automation-like&rdquo; behavior</td><td>False positives ban real paying merchants</td><td>Human-shaped pacing and jitter</td></tr>
-          <tr><td>Ban the account anyway</td><td>Revenue loss, support load, churn optics</td><td>The one fight left — and now it's expensive for <em>them</em></td></tr>
-        </tbody>
-      </table>
+    <div class="kicker">What is proven</div>
+    <h2>The argument ships a verifier, not a belief</h2>
+    <p>Static snapshot of <code>examples/receipts/release_v0.1.txt</code>. Reproduce it
+      yourself — the receipt is the source of truth, not this page.</p>
+    <div class="term">
+      <div><span class="p">$</span> <span class="cmd">python examples/verify_release.py</span></div>
+      <div>&nbsp;</div>
+      <div>proof_demo_smoke&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="ok">PASS</span></div>
+      <div>operator_demo_smoke&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="ok">PASS</span></div>
+      <div>receipt_verification&nbsp;&nbsp;&nbsp;&nbsp;<span class="ok">PASS</span></div>
+      <div>adapter_conformance_all&nbsp;<span class="ok">PASS</span></div>
+      <div>replay_check&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="ok">PASS</span></div>
+      <div>fast_tests&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="ok">PASS</span></div>
+      <div>&nbsp;</div>
+      <div>release_verdict&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="ok">PASS</span></div>
+      <div class="c"># not hardware proof · not live-seller proof · not business proof</div>
     </div>
   </div>
 </section>
 
-<section>
+<!-- ============================ NOT CLAIMED ============================ -->
+<section id="boundaries">
   <div class="wrap">
-    <div class="kicker">How it works</div>
-    <h2>Cache meaning, never pixels</h2>
-    <p>
-      A recorded tap-coordinate macro is a per-service adapter rebuilt one macro at a time —
-      the Page365 failure mode reborn. Screen Ghost skills store <strong>semantic waypoints</strong>
-      (&ldquo;tap the element labeled <em>Orders</em>&rdquo;), resolved against the live screen at
-      replay time. Churn costs speed, never capability. And the hands are local-only by design:
-      the actuation layer has no network surface, so there is no remote kill switch either.
-    </p>
-    <div class="pipe">
-      <div class="stage"><div class="card"><h3>Canonical intent</h3><p>&ldquo;Reply to order #4412&rdquo; — a stable vocabulary that never churns</p></div></div>
-      <div class="arrow" aria-hidden="true">→</div>
-      <div class="stage"><div class="card"><h3>Skill fast path</h3><p>Known label-anchored waypoints, resolved on today's screen</p></div></div>
-      <div class="arrow" aria-hidden="true">→</div>
-      <div class="stage"><div class="card"><h3>Stale? Re-derive</h3><p>Label gone → skill demoted → vision model re-reads the new UI</p></div></div>
-      <div class="arrow" aria-hidden="true">→</div>
-      <div class="stage"><div class="card"><h3>Local hands</h3><p>Taps on physically attached hardware — no remote surface, no revocation</p></div></div>
+    <div class="kicker">What is not claimed</div>
+    <h2>Frozen categories stay frozen</h2>
+    <div class="bound">
+      <strong>ScreenGhost v0.1 does not claim:</strong>
+      <ul>
+        <li>no hardware proof — nothing has run on a physical device</li>
+        <li>no live-seller proof — no real seller, account, or app session</li>
+        <li>no business-outcome proof — no revenue or seller-hour lift</li>
+        <li>no universal app-compatibility claim — surfaces prove out per adapter</li>
+        <li>no claim the parser generalizes to all merchant Thai</li>
+      </ul>
+      <p class="small" style="margin-top:12px">
+        Full list and the proven table:
+        <a href="https://github.com/BigBirdReturns/ScreenGhost/blob/main/docs/CLAIM_BOUNDARIES.md">docs/CLAIM_BOUNDARIES.md</a>.
+        Overclaiming is treated as a bug.
+      </p>
     </div>
   </div>
 </section>
 
-<section>
+<!-- ============================ ADAPTERS ============================ -->
+<section id="adapters">
   <div class="wrap">
-    <div class="kicker">The two objections, answered</div>
-    <h2>&ldquo;It can't read Thai, and it can't scale.&rdquo;</h2>
-    <p>
-      The strongest case against this design deserves to be stated straight, so here it is:
-      a screenshot-and-OCR loop mangles complex scripts and loses the parts that aren't text —
-      stickers, locations, attachments, reactions — and a datacenter phone-farm gets fingerprinted
-      by its shared origin IP. Both are real. Both are <strong>mechanism</strong> problems, not laws
-      of the approach — and both dissolve the moment you stop treating the screen as an image to OCR
-      and stop running the hands in a datacenter.
+    <div class="kicker">Adapter conformance</div>
+    <h2>"What if the real app is different?" is a test, not a verdict</h2>
+    <p>If an app surface exposes exact text and bounded rows, it can be tested against the
+      candidate contract. If it fails, the failure files as exactly one <em>named</em>
+      adapter cause — not a debate. If it withholds text entirely, that too is explicit:
+      <code>no_text_exposed</code>.</p>
+    <div class="chips">
+      <span class="chip">no_text_exposed</span>
+      <span class="chip">unicode_corruption</span>
+      <span class="chip">row_grouping_failure</span>
+      <span class="chip">dedupe_failure</span>
+      <span class="chip">payload_classification_failure</span>
+      <span class="chip">visible_window_loss</span>
+      <span class="chip">unsupported_surface</span>
+      <span class="chip">malformed_fixture</span>
+    </div>
+    <p class="small muted" style="margin-top:14px">
+      13 fixtures, single-cause classification, golden candidate ledgers —
+      <a href="https://github.com/BigBirdReturns/ScreenGhost/blob/main/docs/ADAPTER_CONFORMANCE.md">docs/ADAPTER_CONFORMANCE.md</a>.
     </p>
-
-    <h3 style="margin-top:22px">Reading fidelity — vision is the fallback, not the front door</h3>
-    <div class="pipe">
-      <div class="stage"><div class="card"><h3>OS view tree</h3><p>Read the live UI as nodes — the <strong>real Unicode string</strong>. Thai is exact because it was never a picture. No model on the text path.</p></div></div>
-      <div class="arrow" aria-hidden="true">→</div>
-      <div class="stage"><div class="card"><h3>Clipboard / copy</h3><p>Select &rarr; copy &rarr; read: the exact characters any human could copy off the screen.</p></div></div>
-      <div class="arrow" aria-hidden="true">→</div>
-      <div class="stage"><div class="card"><h3>Vision, last</h3><p>Reserved for genuine pixels — a sticker's identity, a map thumbnail — a small, on-demand slice, not the hot path.</p></div></div>
-    </div>
-
-    <h3 style="margin-top:22px">Scale topology — local hands, cloud aggregates</h3>
-    <div class="kpis">
-      <div class="card tile"><div class="label">Where the hands run</div><div class="value">The seller's phone</div><div class="delta">already always-on, already running the app — no PC, no device farm</div></div>
-      <div class="card tile"><div class="label">What the cloud does</div><div class="value">Aggregate only</div><div class="delta">moves already-structured events (architecture — hosted scale is a frozen claim, not demonstrated here)</div></div>
-      <div class="card tile"><div class="label">Shared origin IPs to fingerprint</div><div class="value">0</div><div class="delta">every action comes from the seller's own device, account, and IP</div></div>
-    </div>
-    <div class="note">
-      The IP-block objection is the foundation, not the flaw: with no central actuation there is no
-      shared origin to detect. The cloud tier carries <em>data, not control</em> — the hands keep no
-      network surface, so there is still no remote kill switch.
-      <br><br>
-      And because a demo that hides its risks is a boast, not an argument — the two things that can
-      still bite: OS accessibility-service policy (expect off-store distribution) and the platform's
-      account-ban vector (a consent/product posture, not a capture trick). Full spec, risks carried in
-      the open:
-      <a href="https://github.com/BigBirdReturns/ScreenGhost/blob/main/docs/scaling-architecture.md">docs/scaling-architecture.md</a>.
-    </div>
   </div>
 </section>
 
+<!-- ============================ RUN IT ============================ -->
+<section id="run">
+  <div class="wrap">
+    <div class="kicker">Run it</div>
+    <h2>Clone it cold. It runs.</h2>
+    <pre class="run"><span class="c"># set up, then run the whole evidence stack</span>
+python -m tools.setup_demo
+python examples/verify_release.py
+
+<span class="c"># the operator-seeded adversarial proof (any seed you pick)</span>
+python examples/pop_proof_demo.py --seed "pop-picks-this-live" --sellers 1000 --mode adversarial
+
+<span class="c"># the reviewable order ledger, end to end (add --serve for the local UI)</span>
+python examples/operator_demo.py --seed "op" --sellers 10
+
+<span class="c"># the adapter conformance scorecard</span>
+python examples/adapter_conformance.py --all</pre>
+  </div>
+</section>
+
+<!-- ============================ ISSUE ROUTING ============================ -->
 <section>
   <div class="wrap">
-    <div class="kicker">Proven / frozen — the whole point</div>
-    <h2>Every claim is a category, a receipt, or explicitly frozen</h2>
-    <p>
-      The argument doesn't ask for belief. It ships a verifier. Same seed → same
-      numbers, in any process.
-    </p>
-    <div class="asym-scroll card" style="padding:6px 6px 2px">
-      <table class="asym">
-        <thead><tr><th scope="col">Claim</th><th scope="col">Status</th><th scope="col">How to check</th></tr></thead>
-        <tbody>
-          <tr><td>Exact Thai preserved, no OCR on the text path</td><td><strong>Proven</strong> [1]/[2a]</td><td><code>adapter_conformance.py --all</code></td></tr>
-          <tr><td>Order-event recall under labeled load; honest boundary</td><td><strong>Proven</strong> [1]</td><td><code>population_bench.py</code></td></tr>
-          <tr><td>View-tree recovery == in-process (rendered XML)</td><td><strong>Proven</strong> [2a]</td><td><code>parity_bench.py</code></td></tr>
-          <tr><td>Reviewable ledger: propose → correct → export → replay</td><td><strong>Proven</strong></td><td><code>operator_demo.py</code></td></tr>
-          <tr><td>App-surface differences → one named adapter cause</td><td><strong>Proven</strong> [2a]</td><td><code>adapter_conformance.py</code></td></tr>
-          <tr><td>Real hardware · real apps · seller-hour lift</td><td><strong>Frozen</strong> [2b]/[3]</td><td>not claimed</td></tr>
-        </tbody>
-      </table>
+    <div class="kicker">Where an objection goes now</div>
+    <h2>Remaining criticism files as a ticket, not a verdict</h2>
+    <p>The old objection was one impossibility claim. It is now five ordinary routes —
+      each with an issue template.</p>
+    <div class="routes">
+      <div class="route"><b>adapter failure</b><div class="small muted">a surface fails the candidate contract</div></div>
+      <div class="route"><b>resolver failure</b><div class="small muted">wrong SKU / qty / variant, or no resolve</div></div>
+      <div class="route"><b>product / UI issue</b><div class="small muted">review loop, store, export, replay</div></div>
+      <div class="route"><b>receipt reproducibility</b><div class="small muted">a receipt won't reproduce cold</div></div>
+      <div class="route"><b>claim-boundary issue</b><div class="small muted">a doc appears to overclaim</div></div>
     </div>
-    <p style="margin-top:14px">
-      One command runs it all: <code>python examples/verify_release.py</code>. Full list of
-      what is <em>not</em> claimed:
-      <a href="https://github.com/BigBirdReturns/ScreenGhost/blob/main/docs/CLAIM_BOUNDARIES.md">CLAIM_BOUNDARIES.md</a>
-      &middot; per-objection breakdown:
-      <a href="https://github.com/BigBirdReturns/ScreenGhost/blob/main/docs/OBJECTION_MATRIX.md">OBJECTION_MATRIX.md</a>.
-    </p>
   </div>
 </section>
 
 <footer>
   <div class="wrap">
-    <p style="color:var(--text-secondary)">
-      <strong style="color:var(--text-primary)">Screen Ghost</strong> — autonomous UI control and
-      state observation. No vendor API. No permission. The hands run local — only structured events
-      ever leave the device.
-      <a href="https://github.com/BigBirdReturns/ScreenGhost">github.com/BigBirdReturns/ScreenGhost</a>
+    <p style="color:var(--muted)">
+      <strong style="color:var(--ink)">ScreenGhost</strong> — turns seller screen state into a
+      reviewable order ledger. Local evidence kernel; the hands run on-device, only structured
+      events leave. <a href="https://github.com/BigBirdReturns/ScreenGhost">github.com/BigBirdReturns/ScreenGhost</a>
     </p>
-    <p>Simulation and cost figures are illustrative, drawn from the multi-protocol integration wars
-      (Trillian vs. AOL, and every fight like it since). They are narrative, not a scale, hardware, or
-      business claim — see <a href="https://github.com/BigBirdReturns/ScreenGhost/blob/main/docs/CLAIM_BOUNDARIES.md">CLAIM_BOUNDARIES.md</a>.</p>
+    <p class="small">Screenshots above are of ScreenGhost's own review UI on demo data. No hardware,
+      live-seller, or business outcome is claimed — see
+      <a href="https://github.com/BigBirdReturns/ScreenGhost/blob/main/docs/CLAIM_BOUNDARIES.md">CLAIM_BOUNDARIES.md</a>.</p>
   </div>
 </footer>
 
-<script>
-/* ============================== simulation ============================== */
-(function () {
-  const DAY_MS = 1500;          // one simulated day
-  const TICK_MS = 100;
-  const ORDERS_PER_DAY = 120;
-
-  const state = {
-    day: 0,
-    auto: false,
-    lastAutoBreak: 0,
-    adapter: { status: 'live', orders: 0, down: 0, fixEta: 0 },
-    sg:      { status: 'live', orders: 0, down: 0, fixEta: 0 },
-  };
-
-  const $ = id => document.getElementById(id);
-  const badges = { adapter: $('badgeAdapter'), sg: $('badgeSG') };
-  const logs = { adapter: $('logAdapter'), sg: $('logSG') };
-
-  function setBadge(which, status) {
-    const b = badges[which];
-    const map = {
-      live:      { icon: '●', txt: 'LIVE',        color: 'var(--status-good)' },
-      rederive:  { icon: '◐', txt: 'RE-DERIVING', color: 'var(--status-warning)' },
-      down:      { icon: '✕', txt: 'DOWN',        color: 'var(--status-critical)' },
-    };
-    const m = map[status];
-    b.querySelector('.icon').textContent = m.icon;
-    b.querySelector('.icon').style.color = m.color;
-    b.querySelector('.txt').textContent = m.txt;
-  }
-
-  function log(which, cls, msg) {
-    const el = logs[which];
-    const line = document.createElement('div');
-    line.innerHTML = '<span class="day">d' + state.day.toFixed(0).padStart(3, '0') + '</span> <span class="' + cls + '">' + msg + '</span>';
-    el.appendChild(line);
-    el.scrollTop = el.scrollHeight;
-    while (el.childNodes.length > 60) el.removeChild(el.firstChild);
-  }
-
-  let breakCount = 0;
-  function shipBreak() {
-    breakCount++;
-    // Protocol adapter: hard outage until engineers ship a fix (4–9 sim-days)
-    const fixDays = 4 + Math.random() * 5;
-    state.adapter.status = 'down';
-    state.adapter.fixEta = state.day + fixDays;
-    setBadge('adapter', 'down');
-    log('adapter', 'bad', 'break #' + breakCount + ': protocol changed — adapter dead');
-    log('adapter', 'warn', 'reverse-engineering… fix ETA ~' + fixDays.toFixed(1) + ' days');
-
-    // Screen Ghost: redesign = stale skill, re-derive in ~90s (0.001 sim-days ≈ 2s real)
-    state.sg.status = 'rederive';
-    state.sg.fixEta = state.day + 0.07; // ~90 simulated seconds
-    setBadge('sg', 'rederive');
-    log('sg', 'warn', 'break #' + breakCount + ': UI redesigned — skill stale (label not found)');
-    log('sg', 'warn', 'VLM re-deriving path from live screen…');
-  }
-
-  function tick() {
-    state.day += TICK_MS / DAY_MS;
-    $('simDay').textContent = Math.floor(state.day);
-
-    for (const which of ['adapter', 'sg']) {
-      const s = state[which];
-      if (s.status !== 'live') {
-        s.down += TICK_MS / DAY_MS;
-        if (state.day >= s.fixEta) {
-          s.status = 'live';
-          setBadge(which, 'live');
-          if (which === 'adapter') log(which, 'ok', 'fix shipped — adapter back online');
-          else { log(which, 'ok', 'path re-derived — new skill saved'); log(which, 'ok', 'processing resumed'); }
-        }
-      }
-      if (s.status === 'live') {
-        s.orders += (ORDERS_PER_DAY * TICK_MS / DAY_MS) * (0.8 + Math.random() * 0.4);
-      }
-      $(which === 'adapter' ? 'ordersAdapter' : 'ordersSG').textContent = Math.floor(s.orders).toLocaleString();
-      $(which === 'adapter' ? 'downAdapter' : 'downSG').textContent = s.down.toFixed(1);
-    }
-
-    if (state.auto && state.day - state.lastAutoBreak >= 12) {
-      state.lastAutoBreak = state.day;
-      shipBreak();
-    }
-  }
-
-  $('breakBtn').addEventListener('click', shipBreak);
-  $('autoBtn').addEventListener('click', function () {
-    state.auto = !state.auto;
-    state.lastAutoBreak = state.day;
-    this.setAttribute('aria-pressed', String(state.auto));
-    this.textContent = state.auto ? 'Auto: ON — breaking every 12 sim-days' : 'Auto: break every 12 sim-days';
-  });
-
-  setBadge('adapter', 'live'); setBadge('sg', 'live');
-  log('adapter', 'ok', 'adapter online — parsing reverse-engineered protocol');
-  log('sg', 'ok', 'observing official app — skills warm');
-  setInterval(tick, TICK_MS);
-})();
-
-/* ============================== cost chart ============================== */
-(function () {
-  // Cumulative engineer-days lost, per breaking change (illustrative)
-  const perBreakAdapter = [6, 8, 5, 12, 7, 6, 13, 6, 11, 8, 13, 9];
-  const DATA = perBreakAdapter.map((d, i) => ({
-    brk: i + 1,
-    adapter: perBreakAdapter.slice(0, i + 1).reduce((a, b) => a + b, 0),
-    sg: +((i + 1) * 0.25).toFixed(2), // a QA spot-check per break
-  }));
-
-  const svg = document.getElementById('chart');
-  const NS = 'http://www.w3.org/2000/svg';
-  const W = 900, H = 380, M = { top: 24, right: 170, bottom: 44, left: 56 };
-  const iw = W - M.left - M.right, ih = H - M.top - M.bottom;
-  const xMax = 12, yMax = 120;
-  const x = v => M.left + (v - 1) / (xMax - 1) * iw;
-  const y = v => M.top + ih - v / yMax * ih;
-
-  function el(name, attrs, parent) {
-    const e = document.createElementNS(NS, name);
-    for (const k in attrs) e.setAttribute(k, attrs[k]);
-    (parent || svg).appendChild(e);
-    return e;
-  }
-  function text(str, attrs, parent) {
-    const t = el('text', attrs, parent);
-    t.textContent = str;
-    return t;
-  }
-
-  // gridlines + y ticks (hairline, solid, recessive)
-  for (let v = 0; v <= yMax; v += 30) {
-    el('line', { x1: M.left, x2: M.left + iw, y1: y(v), y2: y(v), stroke: 'var(--grid)', 'stroke-width': 1 });
-    text(String(v), { x: M.left - 10, y: y(v) + 4, 'text-anchor': 'end', 'font-size': 12, fill: 'var(--text-muted)', style: 'font-variant-numeric: tabular-nums' });
-  }
-  // baseline + x ticks
-  el('line', { x1: M.left, x2: M.left + iw, y1: y(0), y2: y(0), stroke: 'var(--axis)', 'stroke-width': 1 });
-  for (let b = 1; b <= xMax; b++) {
-    text(String(b), { x: x(b), y: M.top + ih + 20, 'text-anchor': 'middle', 'font-size': 12, fill: 'var(--text-muted)' });
-  }
-  text('platform breaking change #', { x: M.left + iw / 2, y: H - 6, 'text-anchor': 'middle', 'font-size': 12, fill: 'var(--text-muted)' });
-  text('engineer-days (cumulative)', { x: M.left, y: 14, 'font-size': 12, fill: 'var(--text-muted)' });
-
-  // series lines (2px, round) + end markers (r=4 + 2px surface ring)
-  const series = [
-    { key: 'adapter', color: 'var(--adapter)', label: 'Protocol adapter' },
-    { key: 'sg', color: 'var(--sg)', label: 'Screen Ghost' },
-  ];
-  for (const s of series) {
-    const pts = DATA.map(d => x(d.brk) + ',' + y(d[s.key])).join(' ');
-    el('polyline', { points: pts, fill: 'none', stroke: s.color, 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' });
-    const last = DATA[DATA.length - 1];
-    el('circle', { cx: x(12), cy: y(last[s.key]), r: 6, fill: 'var(--surface-1)' });
-    el('circle', { cx: x(12), cy: y(last[s.key]), r: 4, fill: s.color });
-    // direct end label: identity via the line+dot; text wears ink, not series color
-    const g = el('g', {});
-    text(s.label, { x: x(12) + 12, y: y(last[s.key]) - 2, 'font-size': 12.5, 'font-weight': 600, fill: 'var(--text-primary)' }, g);
-    text(last[s.key] + ' days', { x: x(12) + 12, y: y(last[s.key]) + 13, 'font-size': 12, fill: 'var(--text-secondary)', style: 'font-variant-numeric: tabular-nums' }, g);
-  }
-
-  // hover layer: crosshair + tooltip; keyboard arrows mirror hover
-  const cross = el('line', { y1: M.top, y2: M.top + ih, stroke: 'var(--axis)', 'stroke-width': 1, visibility: 'hidden' });
-  const hoverDots = series.map(s => el('circle', { r: 5, fill: s.color, stroke: 'var(--surface-1)', 'stroke-width': 2, visibility: 'hidden' }));
-  const tip = document.getElementById('tooltip');
-  const wrapEl = document.getElementById('chartWrap');
-  let focusIdx = -1;
-
-  function show(idx, clientX) {
-    const d = DATA[idx];
-    cross.setAttribute('x1', x(d.brk)); cross.setAttribute('x2', x(d.brk));
-    cross.setAttribute('visibility', 'visible');
-    series.forEach((s, i) => {
-      hoverDots[i].setAttribute('cx', x(d.brk));
-      hoverDots[i].setAttribute('cy', y(d[s.key]));
-      hoverDots[i].setAttribute('visibility', 'visible');
-    });
-    tip.innerHTML =
-      '<div class="t-title">Breaking change #' + d.brk + '</div>' +
-      '<div class="row"><span class="dot" style="background:var(--adapter)"></span>Protocol adapter <b>' + d.adapter + ' days</b></div>' +
-      '<div class="row"><span class="dot" style="background:var(--sg)"></span>Screen Ghost <b>' + d.sg + ' days</b></div>';
-    tip.style.display = 'block';
-    const r = wrapEl.getBoundingClientRect();
-    const svgX = (x(d.brk) / W) * r.width;
-    const left = Math.min(Math.max(svgX + 14, 0), r.width - tip.offsetWidth - 4);
-    tip.style.left = left + 'px';
-    tip.style.top = '30px';
-  }
-  function hide() {
-    cross.setAttribute('visibility', 'hidden');
-    hoverDots.forEach(d => d.setAttribute('visibility', 'hidden'));
-    tip.style.display = 'none';
-    focusIdx = -1;
-  }
-  svg.addEventListener('mousemove', ev => {
-    const r = svg.getBoundingClientRect();
-    const px = (ev.clientX - r.left) / r.width * W;
-    let best = 0, bestD = Infinity;
-    DATA.forEach((d, i) => { const dd = Math.abs(x(d.brk) - px); if (dd < bestD) { bestD = dd; best = i; } });
-    show(best, ev.clientX);
-  });
-  svg.addEventListener('mouseleave', hide);
-  svg.addEventListener('keydown', ev => {
-    if (ev.key === 'ArrowRight') { focusIdx = Math.min(DATA.length - 1, focusIdx + 1); show(focusIdx); ev.preventDefault(); }
-    if (ev.key === 'ArrowLeft')  { focusIdx = Math.max(0, focusIdx <= 0 ? 0 : focusIdx - 1); show(focusIdx); ev.preventDefault(); }
-    if (ev.key === 'Escape') hide();
-  });
-  svg.addEventListener('blur', hide);
-
-  // table view — the WCAG-clean twin
-  const tbl = document.getElementById('tableView');
-  tbl.innerHTML = '<table class="data"><thead><tr><th scope="col">Breaking change</th><th scope="col">Protocol adapter (cum. eng-days)</th><th scope="col">Screen Ghost (cum. eng-days)</th></tr></thead><tbody>' +
-    DATA.map(d => '<tr><td>#' + d.brk + '</td><td>' + d.adapter + '</td><td>' + d.sg + '</td></tr>').join('') +
-    '</tbody></table>';
-  document.getElementById('tableBtn').addEventListener('click', function () {
-    const showTable = tbl.hidden;
-    tbl.hidden = !showTable;
-    wrapEl.style.display = showTable ? 'none' : '';
-    document.getElementById('chartLegend').style.display = showTable ? 'none' : '';
-    this.setAttribute('aria-pressed', String(showTable));
-    this.textContent = showTable ? 'Chart view' : 'Table view';
-  });
-})();
-</script>
 </body>
 </html>
