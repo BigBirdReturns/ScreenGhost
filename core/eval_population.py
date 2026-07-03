@@ -27,6 +27,23 @@ from core.population import LabeledMessage, SellerWorld, resolve_sku
 _RATE = {"quiet": 0.08, "normal": 0.5, "busy": 3.3, "hot": 10.0, "burst": 20.0}
 
 
+def predicted_fields(ev, catalog):
+    """(event_type, resolved_sku, qty) — the pipeline's read of one event.
+
+    Shared by the in-process scorer and the Android view-tree scorer so a parity
+    delta reflects the capture seam, never two different scoring rules.
+    """
+    return (classify_event(ev.text), resolve_sku(ev.text, catalog),
+            parse_confirm(ev.text)[2])
+
+
+def event_is_correct(lm, etype, psku, pqty) -> bool:
+    return bool(
+        lm and lm.should_emit and etype == lm.event_type
+        and psku == lm.sku and pqty == lm.qty
+    )
+
+
 @dataclass
 class WorldResult:
     cohort: str
@@ -99,16 +116,11 @@ def evaluate_world(world: SellerWorld, window: int = 400,
     adv: Dict[str, List[int]] = {}
     for k, ev in actionable:
         lm = label_by_id.get(ev.msg_id)
-        etype = classify_event(ev.text)
-        psku = resolve_sku(ev.text, catalog)
-        _, _, pqty = parse_confirm(ev.text)
+        etype, psku, pqty = predicted_fields(ev, catalog)
         # exact-text integrity: emitted text must equal the source line.
         if lm is not None and ev.text != lm.msg.text:
             unicode_corruptions += 1
-        correct = bool(
-            lm and lm.should_emit and etype == lm.event_type
-            and psku == lm.sku and pqty == lm.qty
-        )
+        correct = event_is_correct(lm, etype, psku, pqty)
         if correct:
             tp += 1
             # capture latency = polls between the message appearing on screen and
