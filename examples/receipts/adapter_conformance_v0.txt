@@ -1,0 +1,18 @@
+fixture                                unicode  group dedupe payloads window        verdict
+-------------------------------------------------------------------------------------------
+address_fragments.xml                     PASS   PASS   PASS     PASS      0           PASS
+duplicate_scroll_rows.xml                 PASS   PASS   PASS     PASS      0           PASS
+facebook_live_comments_basic.xml          PASS   PASS   PASS     PASS      0           PASS
+facebook_live_comments_repeat_cf.xml      PASS   PASS   PASS     PASS      0           PASS
+line_like_basic.xml                       PASS   PASS   PASS     PASS      0           PASS
+line_like_emoji.xml                       PASS   PASS   PASS     PASS      0           PASS
+line_like_payment_screenshot.xml          PASS   PASS   PASS     PASS      0           PASS
+line_like_sticker.xml                     PASS   PASS   PASS     PASS      0           PASS
+missing_text_nodes.xml                    PASS   PASS   PASS     PASS      0  EXPECTED_FAIL (no_text_exposed)
+pathological_overlap.xml                  PASS   FAIL   PASS     PASS      0  EXPECTED_FAIL (row_grouping_failure)
+stockout_substitution.xml                 PASS   PASS   PASS     PASS      0           PASS
+variant_ambiguity.xml                     PASS   PASS   PASS     PASS      0           PASS
+webview_flat_text.xml                     PASS   PASS   PASS     PASS      0           PASS
+
+13 fixtures, 0 undeclared failure(s).
+FORBIDDEN: hardware proof, live-seller proof, business proof

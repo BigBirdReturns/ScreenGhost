@@ -271,6 +271,29 @@ def receipt_from_store(store: LedgerStore, worlds: List[SellerWorld],
     }
 
 
+def receipt_from_store_ids(store: LedgerStore, seller_ids: List[str],
+                           seed: str) -> Dict:
+    """Read-only receipt by seller id, no ground-truth reproduction (adapter
+    demo has no synthetic answer key). Denominators stay separate."""
+    def cnt(status):
+        return sum(len(store.events(sid, status=status)) for sid in seller_ids)
+    total_caps = sum(len(store.all_captures(sid)) for sid in seller_ids)
+    order = sum(len(store.events(sid)) for sid in seller_ids)
+    return {
+        "seed": seed, "sellers": len(seller_ids),
+        "total_messages": total_caps, "order_bearing_messages": order,
+        "proposed_events": cnt("proposed"), "accepted_events": cnt(ACCEPTED),
+        "rejected_events": cnt(REJECTED),
+        "corrected_events": sum(store.corrected_event_count(s) for s in seller_ids),
+        "needs_info_events": cnt(NEEDS_INFO),
+        "unicode_corruptions": sum(1 for s in seller_ids
+                                   for c in store.all_captures(s) if not c["unicode_ok"]),
+        "duplicate_events": 0,
+        "ledger_reproduction_before_correction": "n/a (no synthetic ground truth)",
+        "ledger_reproduction_after_correction": "n/a (no synthetic ground truth)",
+    }
+
+
 _RECEIPT_ORDER = [
     "seed", "sellers", "total_messages", "order_bearing_messages",
     "proposed_events", "accepted_events", "rejected_events", "corrected_events",
@@ -281,6 +304,12 @@ _RECEIPT_ORDER = [
 
 def export_session(store: LedgerStore, worlds: List[SellerWorld],
                    receipt: Dict, out_dir: str) -> Dict[str, str]:
+    return export_by_sellers(store, [w.profile.seller_id for w in worlds],
+                             receipt, out_dir)
+
+
+def export_by_sellers(store: LedgerStore, seller_ids: List[str],
+                      receipt: Dict, out_dir: str) -> Dict[str, str]:
     """Write orders.csv, corrections.csv, captures.csv, receipt.txt."""
     os.makedirs(out_dir, exist_ok=True)
     paths = {k: os.path.join(out_dir, k) for k in
@@ -290,8 +319,8 @@ def export_session(store: LedgerStore, worlds: List[SellerWorld],
         w = csv.writer(f)
         w.writerow(["event_id", "seller_id", "buyer", "sku", "qty", "variant",
                     "event_type", "status", "confidence"])
-        for world in worlds:
-            for e in store.events(world.profile.seller_id):
+        for sid in seller_ids:
+            for e in store.events(sid):
                 w.writerow([e["event_id"], e["seller_id"], e["buyer"], e["sku"],
                             e["qty"], e["variant"], e["event_type"], e["status"],
                             e["confidence"]])
@@ -300,8 +329,8 @@ def export_session(store: LedgerStore, worlds: List[SellerWorld],
         w = csv.writer(f)
         w.writerow(["correction_id", "event_id", "field", "old_value",
                     "new_value", "reason", "source"])
-        for world in worlds:
-            for c in store.all_corrections(world.profile.seller_id):
+        for sid in seller_ids:
+            for c in store.all_corrections(sid):
                 w.writerow([c["correction_id"], c["event_id"], c["field"],
                             c["old_value"], c["new_value"], c["reason"], c["source"]])
 
@@ -309,8 +338,8 @@ def export_session(store: LedgerStore, worlds: List[SellerWorld],
         w = csv.writer(f)
         w.writerow(["capture_id", "seller_id", "buyer_display", "ts", "raw_text",
                     "dedupe_key", "parser_path", "unicode_ok"])
-        for world in worlds:
-            for c in store.all_captures(world.profile.seller_id):
+        for sid in seller_ids:
+            for c in store.all_captures(sid):
                 w.writerow([c["capture_id"], c["seller_id"], c["buyer_display"],
                             c["ts"], c["raw_text"], c["dedupe_key"],
                             c["parser_path"], c["unicode_ok"]])

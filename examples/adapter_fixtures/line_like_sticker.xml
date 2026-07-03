@@ -1,0 +1,10 @@
+<!--META {"fixture_id": "line_like_sticker", "surface_type": "line_like", "expected_verdict": "PASS", "expected_failure_cause": null, "positive_conditions_exercised": ["order_text_candidate"], "negative_conditions_exercised": ["sticker_payload"], "expected_candidates": [{"payload_type": "sticker", "sender": null, "text": ""}, {"payload_type": "text", "sender": null, "text": "Mai"}, {"payload_type": "text", "sender": "Mai", "text": "CF B02 x1 ค่ะ"}], "expected_ledger_hash": "93579fba4ce4bdf4", "fixture_hash": "a1c7e4e0ede5419b"}-->
+<hierarchy rotation="0">
+<node class="android.widget.FrameLayout" bounds="[0,0][1080,2400]">
+<node text="Mai" class="android.widget.TextView" content-desc="" clickable="false" bounds="[40,120][240,180]"/>
+<node text="CF B02 x1 ค่ะ" class="android.widget.TextView" content-desc="" clickable="false" bounds="[280,120][900,180]"/>
+<node text="t00001" class="android.widget.TextView" content-desc="" clickable="false" bounds="[940,120][1060,180]"/>
+<node text="Mai" class="android.widget.TextView" content-desc="" clickable="false" bounds="[40,250][240,310]"/>
+<node text="t00002" class="android.widget.TextView" content-desc="" clickable="false" bounds="[940,250][1060,310]"/>
+<node text="" class="android.widget.ImageView" content-desc="Sticker: cat" clickable="false" bounds="[280,310][460,460]"/>
+</node></hierarchy>

@@ -338,6 +338,18 @@ today is pipeline integrity `[1]` and rendered view-tree parity `[2a]`; real
 hardware `[2b-1]`, real apps `[2b-2]`, and seller-hour business lift `[3]` are
 deliberately **frozen and not claimed**.
 
+### App-surface differences are adapter tickets, not verdicts
+
+ScreenGhost does not require every app to look identical. It requires every app
+adapter to satisfy a candidate contract. If an app surface exposes exact text
+and bounded rows, the adapter must prove it by conformance fixture. If it does
+not expose text, the failure is explicit: `no_text_exposed`. The architecture is
+not disproven by an adapter failure; the adapter has work to do unless the
+surface withholds text entirely. The contract, fixtures, and verifier are in
+[`docs/ADAPTER_CONFORMANCE.md`](docs/ADAPTER_CONFORMANCE.md) — run
+`python examples/adapter_conformance.py --all`. No hardware or business proof is
+claimed there either.
+
 ## License
 
 MIT
