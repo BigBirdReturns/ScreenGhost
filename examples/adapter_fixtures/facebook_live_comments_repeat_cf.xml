@@ -1,0 +1,13 @@
+<!--META {"fixture_id": "facebook_live_comments_repeat_cf", "surface_type": "fb_live", "expected_verdict": "PASS", "expected_failure_cause": null, "positive_conditions_exercised": ["distinct_buyer_candidates"], "negative_conditions_exercised": ["sticker_payload"], "expected_candidates": [{"payload_type": "sticker", "sender": null, "text": ""}, {"payload_type": "text", "sender": null, "text": "Nan"}, {"payload_type": "text", "sender": "Aum", "text": "CF A01 x1 ค่ะ"}, {"payload_type": "text", "sender": "Fon", "text": "CF A01 x1 ค่ะ"}], "expected_ledger_hash": "27f8bb665ce7ecba", "fixture_hash": "630508498d91b795"}-->
+<hierarchy rotation="0">
+<node class="android.widget.FrameLayout" bounds="[0,0][1080,2400]">
+<node text="Aum" class="android.widget.TextView" content-desc="" clickable="false" bounds="[40,120][240,180]"/>
+<node text="CF A01 x1 ค่ะ" class="android.widget.TextView" content-desc="" clickable="false" bounds="[280,120][900,180]"/>
+<node text="t00001" class="android.widget.TextView" content-desc="" clickable="false" bounds="[940,120][1060,180]"/>
+<node text="Fon" class="android.widget.TextView" content-desc="" clickable="false" bounds="[40,250][240,310]"/>
+<node text="CF A01 x1 ค่ะ" class="android.widget.TextView" content-desc="" clickable="false" bounds="[280,250][900,310]"/>
+<node text="t00002" class="android.widget.TextView" content-desc="" clickable="false" bounds="[940,250][1060,310]"/>
+<node text="Nan" class="android.widget.TextView" content-desc="" clickable="false" bounds="[40,380][240,440]"/>
+<node text="t00003" class="android.widget.TextView" content-desc="" clickable="false" bounds="[940,380][1060,440]"/>
+<node text="" class="android.widget.ImageView" content-desc="Sticker" clickable="false" bounds="[280,440][460,590]"/>
+</node></hierarchy>

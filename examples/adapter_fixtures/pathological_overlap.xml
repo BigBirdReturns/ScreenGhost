@@ -1,0 +1,13 @@
+<!--META {"fixture_id": "pathological_overlap", "surface_type": "line_like", "expected_verdict": "EXPECTED_FAIL", "expected_failure_cause": "row_grouping_failure", "positive_conditions_exercised": ["order_text_candidate"], "negative_conditions_exercised": ["overlapping_rows"], "expected_candidates": [{"payload_type": "text", "sender": "Nok", "text": "Ann"}, {"payload_type": "text", "sender": "Nok", "text": "Bee"}, {"payload_type": "text", "sender": "Nok", "text": "CF C01 x1 ค่ะ"}, {"payload_type": "text", "sender": "Nok", "text": "CF C01 x2 ค่ะ"}, {"payload_type": "text", "sender": "Nok", "text": "CF C02 x1 ค่ะ"}, {"payload_type": "text", "sender": "Nok", "text": "t00002"}, {"payload_type": "text", "sender": "Nok", "text": "t00003"}], "expected_ledger_hash": "12e2a3da2a5d4dcc", "fixture_hash": "86e4f89050bff82b"}-->
+<hierarchy rotation="0">
+<node class="android.widget.FrameLayout" bounds="[0,0][1080,2400]">
+<node text="Nok" class="android.widget.TextView" content-desc="" clickable="false" bounds="[40,120][240,180]"/>
+<node text="CF C01 x1 ค่ะ" class="android.widget.TextView" content-desc="" clickable="false" bounds="[280,120][900,180]"/>
+<node text="t00001" class="android.widget.TextView" content-desc="" clickable="false" bounds="[940,120][1060,180]"/>
+<node text="Ann" class="android.widget.TextView" content-desc="" clickable="false" bounds="[40,135][240,195]"/>
+<node text="CF C02 x1 ค่ะ" class="android.widget.TextView" content-desc="" clickable="false" bounds="[280,135][900,195]"/>
+<node text="t00002" class="android.widget.TextView" content-desc="" clickable="false" bounds="[940,135][1060,195]"/>
+<node text="Bee" class="android.widget.TextView" content-desc="" clickable="false" bounds="[40,150][240,210]"/>
+<node text="CF C01 x2 ค่ะ" class="android.widget.TextView" content-desc="" clickable="false" bounds="[280,150][900,210]"/>
+<node text="t00003" class="android.widget.TextView" content-desc="" clickable="false" bounds="[940,150][1060,210]"/>
+</node></hierarchy>

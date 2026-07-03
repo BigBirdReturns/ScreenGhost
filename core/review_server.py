@@ -1,0 +1,157 @@
+"""Minimal local review UI — stdlib only, no framework, no network egress.
+
+A single-page web UI over the LedgerStore: inbox of proposed/needs_info events,
+raw-capture + parsed-event + catalog panels, correction form, seller ledger,
+and export. Bind to localhost. Nothing here calls out.
+"""
+from __future__ import annotations
+
+import json
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from typing import Dict, List, Optional
+from urllib.parse import parse_qs, urlparse
+
+from core.eval_population import _ledger_shape
+from core.ledger_store import (
+    ACCEPTED, CANCELLED, FULFILLED, LedgerStore, NEEDS_INFO, REJECTED,
+)
+
+_PAGE = """<!doctype html><meta charset=utf-8><title>ScreenGhost — Review Ledger</title>
+<style>body{font:14px system-ui;margin:0;display:flex;height:100vh}
+#l{width:36%;overflow:auto;border-right:1px solid #ccc}#r{flex:1;overflow:auto;padding:12px}
+.grp{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#666;
+ background:#f0f0f0;padding:4px 12px;position:sticky;top:0}
+.ev{padding:7px 12px;border-bottom:1px solid #eee;cursor:pointer}.ev:hover{background:#f4f4f4}
+.st{font-size:11px;padding:1px 6px;border-radius:8px;background:#e6e6e6}
+.banner{background:#fff8e1;border:1px solid #f0e0a0;padding:6px 10px;font-size:12px;margin-bottom:8px}
+h3{margin:14px 0 5px}table{border-collapse:collapse}td,th{border:1px solid #ddd;padding:3px 8px}
+code{background:#f6f6f6;padding:2px 5px;border-radius:4px}
+button{margin:2px;padding:4px 8px}input{width:90px}.muted{color:#888}</style>
+<div id=l><div style=padding:8px><select id=seller onchange=load()></select>
+<button onclick=doExport()>Export</button></div><div id=list></div></div>
+<div id=r><div class=banner>Local review — NOT hardware / business / live-seller proof.</div>
+<div id=detail class=muted>pick an event</div><h3>Ledger</h3><div id=ledger></div>
+<div id=post></div></div>
+<script>
+let cur=null;
+const ORDER=['proposed','proposed_incomplete','needs_info','accepted','corrected',
+ 'rejected','cancelled','fulfilled'];
+async function j(u,o){return (await fetch(u,o)).json()}
+async function boot(){let s=await j('/api/sellers');document.getElementById('seller').innerHTML=
+ s.map(x=>`<option>${x.seller_id}</option>`).join('');load()}
+async function load(){let sel=document.getElementById('seller').value;
+ let ev=await j('/api/events?seller='+encodeURIComponent(sel));
+ let by={};ev.forEach(e=>(by[e.status]=by[e.status]||[]).push(e));
+ let html='';ORDER.forEach(st=>{if(!by[st])return;
+  html+=`<div class=grp>${st} (${by[st].length})</div>`+by[st].map(e=>
+  `<div class=ev onclick="show('${e.event_id}')">${e.buyer} — <b>${e.sku||'?'}</b> ×${e.qty||'?'}
+   <span class=muted>${e.event_type} · conf ${e.confidence}</span></div>`).join('')});
+ document.getElementById('list').innerHTML=html;
+ let led=await j('/api/ledger?seller='+encodeURIComponent(sel));
+ document.getElementById('ledger').innerHTML='<table><tr><th>buyer<th>sku<th>qty</tr>'+
+  led.map(r=>`<tr><td>${r.buyer}<td>${r.sku}<td>${r.qty}</tr>`).join('')+'</table>'}
+async function show(id){cur=id;let e=await j('/api/event/'+id);
+ document.getElementById('detail').innerHTML=`
+ <h3>raw capture</h3><code>${e.raw_text}</code>
+ <span class=muted>parser: ${e.parser_path} · ts ${e.ts}</span>
+ <h3>parsed field(s)</h3><table>
+  <tr><th>buyer<th>sku<th>qty<th>variant<th>type<th>status<th>confidence</tr>
+  <tr><td>${e.buyer}<td>${e.sku}<td>${e.qty}<td>${e.variant||''}<td>${e.event_type}
+   <td><span class=st>${e.status}</span><td>${e.confidence}</tr></table>
+ <h3>correct (append-only)</h3>field
+ <select id=f><option>sku<option>qty<option>variant<option>buyer</select>
+ value <input id=v> <input id=rz value=reason placeholder=reason>
+ <button onclick=corr()>apply</button>
+ <h3>decide</h3><button onclick="act('accept')">accept</button>
+ <button onclick="act('reject')">reject</button><button onclick="act('needs_info')">needs_info</button>
+ <button onclick="act('cancel')">cancel</button><button onclick="act('fulfilled')">fulfilled</button>
+ <h3>correction history</h3>`+(e.corrections.map(c=>`${c.field}: ${c.old_value}→${c.new_value}
+  <span class=muted>(${c.source})</span>`).join('<br>')||'<span class=muted>none</span>')+`
+ <h3>transition history</h3>`+(e.transitions.map(t=>`${t.from_status}→${t.to_status}
+  <span class=muted>(${t.source})</span>`).join('<br>')||'<span class=muted>none</span>')}
+async function act(a){let r=await j('/api/action',{method:'POST',
+ body:JSON.stringify({event_id:cur,action:a})});if(!r.ok)alert(r.error);show(cur);load()}
+async function corr(){await j('/api/action',{method:'POST',body:JSON.stringify({event_id:cur,
+ action:'correct',field:f.value,value:v.value,reason:rz.value})});show(cur);load()}
+async function doExport(){let r=await j('/api/export',{method:'POST'});
+ document.getElementById('post').innerHTML=`<h3>exported</h3><code>${r.dir}</code>
+ <div>replay: <code>python examples/replay_ledger.py --store ${r.dir}/ledger.db</code></div>`}
+boot()</script>"""
+
+
+class _Handler(BaseHTTPRequestHandler):
+    store: LedgerStore = None            # injected
+    worlds: List = []
+    export_dir: str = "log/review_export"
+
+    def log_message(self, *a):           # keep the demo quiet
+        pass
+
+    def _send(self, obj, ctype="application/json"):
+        body = (obj if isinstance(obj, str) else json.dumps(obj, ensure_ascii=False)).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", ctype + "; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_GET(self):
+        u = urlparse(self.path)
+        q = parse_qs(u.query)
+        if u.path == "/":
+            return self._send(_PAGE, "text/html")
+        if u.path == "/api/sellers":
+            rows = self.store.db.execute("SELECT seller_id,cohort FROM sellers ORDER BY seller_id")
+            return self._send([dict(r) for r in rows])
+        if u.path == "/api/events":
+            return self._send(self.store.events(q["seller"][0]))
+        if u.path.startswith("/api/event/"):
+            eid = u.path.rsplit("/", 1)[1]
+            ev = self.store.get_event(eid)
+            if not ev:
+                return self._send({})
+            cap = self.store.get_capture(ev["capture_id"]) or {}
+            ev["raw_text"] = cap.get("raw_text", "")
+            ev["parser_path"] = cap.get("parser_path", "")
+            ev["ts"] = cap.get("ts", "")
+            ev["transitions"] = self.store.transitions(eid)
+            return self._send(ev)
+        if u.path == "/api/ledger":
+            led = self.store.current_ledger(q["seller"][0])
+            return self._send([{"buyer": b, "sku": s, "qty": qn}
+                               for (b, s), qn in sorted(led.items())])
+        self._send({"error": "not found"})
+
+    def do_POST(self):
+        u = urlparse(self.path)
+        n = int(self.headers.get("Content-Length", 0))
+        body = json.loads(self.rfile.read(n) or "{}") if n else {}
+        if u.path == "/api/action":
+            return self._send(self._action(body))
+        if u.path == "/api/export":
+            from core.review import export_session, receipt_from_store
+            rcpt = receipt_from_store(self.store, self.worlds, seed="ui")
+            export_session(self.store, self.worlds, rcpt, self.export_dir)
+            return self._send({"dir": self.export_dir, "receipt": rcpt})
+        self._send({"error": "not found"})
+
+    def _action(self, b: Dict):
+        eid, action = b.get("event_id"), b.get("action")
+        try:
+            if action == "correct":
+                self.store.correct(eid, b["field"], b["value"], b.get("reason", ""), "human")
+            else:
+                self.store.transition(eid, {"accept": ACCEPTED, "reject": REJECTED,
+                                            "needs_info": NEEDS_INFO,
+                                            "cancel": CANCELLED,
+                                            "fulfilled": FULFILLED}[action])
+            return {"ok": True}
+        except Exception as e:                       # surface, don't crash the UI
+            return {"ok": False, "error": str(e)}
+
+
+def make_server(store: LedgerStore, worlds: List, host: str = "127.0.0.1",
+                port: int = 0, export_dir: str = "log/review_export") -> ThreadingHTTPServer:
+    handler = type("H", (_Handler,), {"store": store, "worlds": worlds,
+                                      "export_dir": export_dir})
+    return ThreadingHTTPServer((host, port), handler)

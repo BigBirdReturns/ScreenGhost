@@ -1,0 +1,42 @@
+EVIDENTIARY CATEGORIES (kept separate; do not conflate)
+  [1] PIPELINE proof   — this bench: exact text, dedupe, ledger reproduced
+                         across a broad LABELED SYNTHETIC population.
+  [2] DEVICE-SEAM proof — NOT here: real Android view-tree capture.
+  [3] BUSINESS proof    — NOT here: seller-hour lift from a LIVE seller.
+Synthetic sellers are not live sellers. No business lift is claimed.
+The parser shares a grammar with the generator, so clean recall is high by
+construction — the signal is in the ADVERSARIAL suites, where it must fail open.
+
+POPULATION RECEIPT  [category 1: pipeline]
+cohort        sellers total/min order/min  recall    prec  p95 lat corrupt  dupevt backlog  keeps
+-------------------------------------------------------------------------------------------------
+adversarial        30        59        27   50.0%   34.6%    0.00s       0   0.000   0.000   True
+bakery             30        96        72  100.0%  100.0%    0.00s       0   0.000   0.000   True
+clothing           30        56        42   94.8%   94.8%    0.00s       0   0.000   0.000   True
+collectibles       30        87        69  100.0%  100.0%    0.00s       0   0.000   0.000   True
+cosmetics          30        72        53   93.4%   93.4%    0.00s       0   0.000   0.000   True
+homegoods          30        47        39  100.0%  100.0%    0.00s       0   0.000   0.000   True
+kids               30        72        56  100.0%  100.0%    0.00s       0   0.000   0.000   True
+livemixed          30        76        49  100.0%   82.7%    0.00s       0   0.000   0.000   True
+phoneacc           30        80        51  100.0%   79.8%    0.00s       0   0.000   0.000   True
+secondhand         30        77        48   88.1%   88.1%    0.00s       0   0.000   0.000   True
+
+ledger reproduced exactly (line count + per-SKU units): 63.7% of sellers
+
+ADVERSARIAL SUITES  [where it must fail in the open]
+suite            should-emit   recall  precision  false-pos
+----------------------------------------------------------
+cancel                   963   100.0%     100.0%          0
+clean                  25299   100.0%     100.0%          0
+modify                  1235   100.0%     100.0%          0
+repeat_cf                  0   100.0%       0.0%       1182
+spelling                1135    33.4%      33.4%        756
+stockout_sub               0   100.0%       0.0%       1545
+variant_ambig           5492    73.9%      73.9%       1431
+
+BOUNDARY / FIREHOSE  [keep-up geometry, honest failure past window]
+scenario         total/min order/min  recall  p95 lat   head  keeps up
+----------------------------------------------------------------------
+busy stream           3000      2250  100.0%    0.30s   8.0x      True
+hot sale             12000      9000  100.0%    0.29s   6.7x      True
+firehose             60000     45000   33.3%    0.09s   0.3x     False

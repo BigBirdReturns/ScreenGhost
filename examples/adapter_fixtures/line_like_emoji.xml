@@ -1,0 +1,10 @@
+<!--META {"fixture_id": "line_like_emoji", "surface_type": "line_like", "expected_verdict": "PASS", "expected_failure_cause": null, "positive_conditions_exercised": ["order_text_candidate"], "negative_conditions_exercised": ["emoji_text_candidate"], "expected_candidates": [{"payload_type": "emoji_text", "sender": "Bee", "text": "❤️❤️"}, {"payload_type": "text", "sender": "Ploy", "text": "CF A01 x1 ค่ะ"}], "expected_ledger_hash": "1324b945cd288069", "fixture_hash": "5dc1a42bce14da97"}-->
+<hierarchy rotation="0">
+<node class="android.widget.FrameLayout" bounds="[0,0][1080,2400]">
+<node text="Ploy" class="android.widget.TextView" content-desc="" clickable="false" bounds="[40,120][240,180]"/>
+<node text="CF A01 x1 ค่ะ" class="android.widget.TextView" content-desc="" clickable="false" bounds="[280,120][900,180]"/>
+<node text="t00001" class="android.widget.TextView" content-desc="" clickable="false" bounds="[940,120][1060,180]"/>
+<node text="Bee" class="android.widget.TextView" content-desc="" clickable="false" bounds="[40,250][240,310]"/>
+<node text="❤️❤️" class="android.widget.TextView" content-desc="" clickable="false" bounds="[280,250][900,310]"/>
+<node text="t00002" class="android.widget.TextView" content-desc="" clickable="false" bounds="[940,250][1060,310]"/>
+</node></hierarchy>

@@ -1,0 +1,28 @@
+<!--META {"fixture_id": "duplicate_scroll_rows", "surface_type": "line_like", "expected_verdict": "PASS", "expected_failure_cause": null, "positive_conditions_exercised": ["order_text_candidate"], "negative_conditions_exercised": ["scroll_dedupe"], "expected_candidates": [{"payload_type": "sticker", "sender": null, "text": ""}, {"payload_type": "text", "sender": null, "text": "Nok"}, {"payload_type": "text", "sender": "Ann", "text": "cf cookie x1 คะ"}, {"payload_type": "sticker", "sender": "Bee", "text": ""}, {"payload_type": "text", "sender": "Bee", "text": "CF C02 x1 ค่ะ"}, {"payload_type": "text", "sender": "Nok", "text": "CF C01 x2 ค่ะ"}], "expected_ledger_hash": "76e9b2cedda72e6a", "fixture_hash": "74c36aeedc979e1d"}-->
+<hierarchy rotation="0">
+<node class="android.widget.FrameLayout" bounds="[0,0][1080,2400]">
+<node text="Nok" class="android.widget.TextView" content-desc="" clickable="false" bounds="[40,120][240,180]"/>
+<node text="CF C01 x2 ค่ะ" class="android.widget.TextView" content-desc="" clickable="false" bounds="[280,120][900,180]"/>
+<node text="t00001" class="android.widget.TextView" content-desc="" clickable="false" bounds="[940,120][1060,180]"/>
+<node text="Ann" class="android.widget.TextView" content-desc="" clickable="false" bounds="[40,250][240,310]"/>
+<node text="cf cookie x1 คะ" class="android.widget.TextView" content-desc="" clickable="false" bounds="[280,250][900,310]"/>
+<node text="t00002" class="android.widget.TextView" content-desc="" clickable="false" bounds="[940,250][1060,310]"/>
+<node text="Nok" class="android.widget.TextView" content-desc="" clickable="false" bounds="[40,380][240,440]"/>
+<node text="t00003" class="android.widget.TextView" content-desc="" clickable="false" bounds="[940,380][1060,440]"/>
+<node text="" class="android.widget.ImageView" content-desc="Sticker" clickable="false" bounds="[280,440][460,590]"/>
+</node></hierarchy>
+<hierarchy rotation="0">
+<node class="android.widget.FrameLayout" bounds="[0,0][1080,2400]">
+<node text="Nok" class="android.widget.TextView" content-desc="" clickable="false" bounds="[40,120][240,180]"/>
+<node text="CF C01 x2 ค่ะ" class="android.widget.TextView" content-desc="" clickable="false" bounds="[280,120][900,180]"/>
+<node text="t00001" class="android.widget.TextView" content-desc="" clickable="false" bounds="[940,120][1060,180]"/>
+<node text="Ann" class="android.widget.TextView" content-desc="" clickable="false" bounds="[40,250][240,310]"/>
+<node text="cf cookie x1 คะ" class="android.widget.TextView" content-desc="" clickable="false" bounds="[280,250][900,310]"/>
+<node text="t00002" class="android.widget.TextView" content-desc="" clickable="false" bounds="[940,250][1060,310]"/>
+<node text="Nok" class="android.widget.TextView" content-desc="" clickable="false" bounds="[40,380][240,440]"/>
+<node text="t00003" class="android.widget.TextView" content-desc="" clickable="false" bounds="[940,380][1060,440]"/>
+<node text="" class="android.widget.ImageView" content-desc="Sticker" clickable="false" bounds="[280,440][460,590]"/>
+<node text="Bee" class="android.widget.TextView" content-desc="" clickable="false" bounds="[40,510][240,570]"/>
+<node text="CF C02 x1 ค่ะ" class="android.widget.TextView" content-desc="" clickable="false" bounds="[280,510][900,570]"/>
+<node text="t00004" class="android.widget.TextView" content-desc="" clickable="false" bounds="[940,510][1060,570]"/>
+</node></hierarchy>

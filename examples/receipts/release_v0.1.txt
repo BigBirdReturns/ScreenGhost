@@ -1,0 +1,15 @@
+ScreenGhost v0.1 — Evidence Kernel release receipt
+NOT hardware proof. NOT live-seller proof. NOT business proof.
+
+  proof_demo_smoke          : PASS
+  operator_demo_smoke       : PASS
+  receipt_verification      : PASS
+  adapter_conformance_all   : PASS
+  replay_check              : PASS
+  fast_tests                : PASS
+
+  release_verdict           : PASS
+  forbidden_claims          : hardware proof, live-seller proof, business-outcome proof, universal real-app compatibility
+
+reproduce: python examples/verify_release.py
+claim boundaries: docs/CLAIM_BOUNDARIES.md

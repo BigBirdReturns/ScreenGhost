@@ -325,11 +325,54 @@
   </div>
 </section>
 
+<section>
+  <div class="wrap">
+    <div class="kicker">The two objections, answered</div>
+    <h2>&ldquo;It can't read Thai, and it can't scale.&rdquo;</h2>
+    <p>
+      The strongest case against this design deserves to be stated straight, so here it is:
+      a screenshot-and-OCR loop mangles complex scripts and loses the parts that aren't text —
+      stickers, locations, attachments, reactions — and a datacenter phone-farm gets fingerprinted
+      by its shared origin IP. Both are real. Both are <strong>mechanism</strong> problems, not laws
+      of the approach — and both dissolve the moment you stop treating the screen as an image to OCR
+      and stop running the hands in a datacenter.
+    </p>
+
+    <h3 style="margin-top:22px">Reading fidelity — vision is the fallback, not the front door</h3>
+    <div class="pipe">
+      <div class="stage"><div class="card"><h3>OS view tree</h3><p>Read the live UI as nodes — the <strong>real Unicode string</strong>. Thai is exact because it was never a picture. No model on the text path.</p></div></div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="stage"><div class="card"><h3>Clipboard / copy</h3><p>Select &rarr; copy &rarr; read: the exact characters any human could copy off the screen.</p></div></div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="stage"><div class="card"><h3>Vision, last</h3><p>Reserved for genuine pixels — a sticker's identity, a map thumbnail — a small, on-demand slice, not the hot path.</p></div></div>
+    </div>
+
+    <h3 style="margin-top:22px">Scale topology — local hands, cloud aggregates</h3>
+    <div class="kpis">
+      <div class="card tile"><div class="label">Where the hands run</div><div class="value">The seller's phone</div><div class="delta">already always-on, already running the app — no PC, no device farm</div></div>
+      <div class="card tile"><div class="label">What the cloud does</div><div class="value">Aggregate only</div><div class="delta">moves already-structured events; 50k sessions is unremarkable for one backend</div></div>
+      <div class="card tile"><div class="label">Shared origin IPs to fingerprint</div><div class="value">0</div><div class="delta">every action comes from the seller's own device, account, and IP</div></div>
+    </div>
+    <div class="note">
+      The IP-block objection is the foundation, not the flaw: with no central actuation there is no
+      shared origin to detect. The cloud tier carries <em>data, not control</em> — the hands keep no
+      network surface, so there is still no remote kill switch.
+      <br><br>
+      And because a demo that hides its risks is a boast, not an argument — the two things that can
+      still bite: OS accessibility-service policy (expect off-store distribution) and the platform's
+      account-ban vector (a consent/product posture, not a capture trick). Full spec, risks carried in
+      the open:
+      <a href="https://github.com/BigBirdReturns/ScreenGhost/blob/main/docs/scaling-architecture.md">docs/scaling-architecture.md</a>.
+    </div>
+  </div>
+</section>
+
 <footer>
   <div class="wrap">
     <p style="color:var(--text-secondary)">
       <strong style="color:var(--text-primary)">Screen Ghost</strong> — autonomous UI control and
-      state observation. No cloud. No API. No permission.
+      state observation. No vendor API. No permission. The hands run local — only structured events
+      ever leave the device.
       <a href="https://github.com/BigBirdReturns/ScreenGhost">github.com/BigBirdReturns/ScreenGhost</a>
     </p>
     <p>Simulation and cost figures are illustrative, drawn from the multi-protocol integration wars (Trillian vs. AOL, and every fight like it since).</p>

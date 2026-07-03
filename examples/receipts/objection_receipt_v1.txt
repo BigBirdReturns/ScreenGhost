@@ -1,0 +1,109 @@
+SCREENGHOST OBJECTION RECEIPT — LIVE (cheap checks executed)
+
+HARD RULES
+  • Denominator discipline: never a rate without saying total msgs vs
+    order-bearing msgs vs UI nodes vs emitted events.
+  • No category borrows trust: synthetic [1] != view-tree [2a] != device
+    [2b-1] != real-app [2b-2] != business [3]. A status is scoped to what ran.
+
+[THAI_TEXT_RELIABILITY]  category [2a]   status: PASS ✓
+   objection : Thai text is unreliable through vision/OCR.
+   answer    : No OCR on the text path; extract exact Unicode from the view tree.
+   bench     : python examples/population_bench.py ; python examples/parity_bench.py
+   receipt   : examples/receipts/parity_seam_v1.txt
+   ALLOWED   : Exact Thai text is preserved through the tested extraction path (view-tree XML -> parse -> group), corruption count 0.
+   FORBIDDEN : That every real app surface exposes perfect Thai nodes — unproven until [2b-2].
+   adapter   : A real app could render Thai as an image (rare) or split nodes oddly; that would be an adapter fix, caught by [2b-2].
+   next proof: [2b-2] benign Thai threads on a real LINE/FB surface.
+
+[VISION_LATENCY]  category [1]   status: PASS ✓
+   objection : Vision models are slow and token-heavy.
+   answer    : The model is not load-bearing for text capture; deterministic extraction first, a model only at interpretation edges.
+   bench     : python examples/keepup_bench.py
+   receipt   : examples/receipts/population_baseline_v0.txt
+   ALLOWED   : The text-capture path invokes no model; p95 capture latency is sub-second at tested volumes.
+   FORBIDDEN : That interpretation of genuinely ambiguous language needs no model ever — some edges will.
+   adapter   : None on the capture path; model cost reappears only if you push interpretation onto it.
+   next proof: Hold: keep the capture path model-free as features grow.
+
+[NON_TEXT_PAYLOADS]  category [1]/[2a]   status: PARTIAL ◐
+   objection : Stickers, locations, attachments, reactions, payment screenshots matter.
+   answer    : Classify them as event- or context-bearing non-text nodes, not as order text.
+   bench     : python examples/population_bench.py
+   receipt   : examples/receipts/population_baseline_v0.txt
+   ALLOWED   : Non-text nodes are typed (sticker/location/attachment) from content-desc; payment-screenshot refs are surfaced as order-bearing-but-unstructured, not silently dropped.
+   FORBIDDEN : That the artwork/bytes behind a sticker or slip are decoded — they are typed, not read.
+   adapter   : Per-app content-desc conventions differ; a resolver table per platform, not an architecture change.
+   next proof: [2b-2] confirm real content-desc strings per platform.
+
+[LIVE_COMMERCE_BURST]  category [1]/[2a]   status: PASS ✓
+   objection : Live commerce creates burst loads and 50-100 concurrent buyers.
+   answer    : Finite viewport, polling cadence, dedupe, backlog, and an explicit keeps_up boundary.
+   bench     : python examples/population_bench.py ; python examples/parity_bench.py
+   receipt   : examples/receipts/parity_seam_v1.txt
+   ALLOWED   : Full order recall with headroom at busy/hot volumes; honest scroll-loss reported past the visible window.
+   FORBIDDEN : That an arbitrary firehose never loses a message — it does, and the boundary says so.
+   adapter   : Real scroll physics and notification timing differ; tune window/cadence, not architecture.
+   next proof: [2b-1] measure real dump cadence on hardware.
+
+[CENTRAL_IP_BLOCKING]  category [2b-1]   status: ARCHITECTURAL ◇
+   objection : Shared origin/IP gets blocked.
+   answer    : No central actuation; the seller uses their own phone, account, IP, and app session.
+   bench     : (architecture) core/android_fixture.py + on-device runner
+   receipt   : docs/scaling-architecture.md
+   ALLOWED   : No shared origin is required by design; there is no central surface to fingerprint.
+   FORBIDDEN : That every platform policy permits every automation mode — a ToS/account question, not an IP one.
+   adapter   : Account-level policy, not IP; a product/consent posture.
+   next proof: [2b-1] device-local runner on real hardware.
+
+[USER_INFRASTRUCTURE]  category [2b-1]   status: ARCHITECTURAL ◇
+   objection : Sellers have no PCs or always-on servers.
+   answer    : Phone-first execution, local append-only logs, replay, optional sync later.
+   bench     : (device) driver.dump_ui_xml -> group_rows on hardware
+   receipt   : pending [2b-1]
+   ALLOWED   : The design assumes only the seller's own phone.
+   FORBIDDEN : That a working on-device build exists today — it is not yet run on hardware.
+   adapter   : Android accessibility/policy for the on-device agent.
+   next proof: [2b-1] run the capture path on a physical device.
+
+[WINDOW_MANAGEMENT]  category [2a]   status: PASS ✓
+   objection : Too many windows and chats drown the system.
+   answer    : Each device manages only its own seller surface; the finite viewport is modeled explicitly.
+   bench     : python examples/parity_bench.py
+   receipt   : examples/receipts/parity_seam_v1.txt
+   ALLOWED   : Scroll replay is deduped and visible-window loss is reported; one device = one seller surface.
+   FORBIDDEN : That a single device multiplexes many sellers — it does not, by design.
+   adapter   : Real multi-tab/live layouts vary; viewport model tuning.
+   next proof: [2b-2] real live-sale layout sampling.
+
+[PARSER_GENERALIZATION]  category [1]   status: PARTIAL ◐
+   objection : Real merchant language is messier than generated language.
+   answer    : Separate parser/resolver failure from the capture seam; expose failures instead of hiding them.
+   bench     : python examples/population_bench.py
+   receipt   : examples/receipts/population_baseline_v0.txt
+   ALLOWED   : Capture-seam delta is ~0, so current failures are attributed to parser/resolver and reported per adversarial suite.
+   FORBIDDEN : That the parser generalizes to real Thai merchant language — the generator shares its grammar; unproven.
+   adapter   : High: real language needs real-data parser work; this is the biggest open item.
+   next proof: [2b-2]/[3] evaluate on real (consented) merchant text.
+
+[APP_SURFACE_DRIFT]  category [2a]->[2b-2]   status: PARTIAL ◐
+   objection : Real LINE/Facebook/Shopee view trees may differ.
+   answer    : Adapter risk, not architecture risk — unless exact text is unavailable from the tree.
+   bench     : python examples/parity_bench.py
+   receipt   : examples/receipts/parity_seam_v1.txt
+   ALLOWED   : Recovery survives font scale, display size, bubble width, and dark mode in the fixture; pathological overlap fails openly.
+   FORBIDDEN : That real app trees group identically to the fixture — that is exactly what [2b-2] must test.
+   adapter   : Medium: per-app node layout; adapters, unless a surface hides text entirely.
+   next proof: [2b-1] then [2b-2] on real surfaces.
+
+[BUSINESS_OUTCOME]  category [3]   status: FROZEN ✕
+   objection : Technical capture does not prove seller value.
+   answer    : True. Freeze the business claim until seller-hour measurement exists.
+   bench     : (frozen) before/after seller-hour
+   receipt   : not claimed
+   ALLOWED   : Nothing about revenue or adoption.
+   FORBIDDEN : Any seller-hour lift, adoption, or revenue claim.
+   adapter   : N/A until a live seller exists.
+   next proof: [3] one consented live seller, before/after.
+
+live signals: pop_corruptions=0  seam_corruptions=0  seam_recall_delta=0.000  busy_keeps_up=True  firehose_fails_openly=True

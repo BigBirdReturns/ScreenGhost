@@ -1,0 +1,10 @@
+<!--META {"fixture_id": "line_like_payment_screenshot", "surface_type": "line_like", "expected_verdict": "PASS", "expected_failure_cause": null, "positive_conditions_exercised": ["text_candidate"], "negative_conditions_exercised": ["payment_screenshot_payload"], "expected_candidates": [{"payload_type": "payment_screenshot", "sender": null, "text": ""}, {"payload_type": "text", "sender": null, "text": "Aum"}, {"payload_type": "text", "sender": "Aum", "text": "โอนแล้วค่ะ"}], "expected_ledger_hash": "45d3e809ddff31bc", "fixture_hash": "dfbc58a6173d1342"}-->
+<hierarchy rotation="0">
+<node class="android.widget.FrameLayout" bounds="[0,0][1080,2400]">
+<node text="Aum" class="android.widget.TextView" content-desc="" clickable="false" bounds="[40,120][240,180]"/>
+<node text="โอนแล้วค่ะ" class="android.widget.TextView" content-desc="" clickable="false" bounds="[280,120][900,180]"/>
+<node text="t00001" class="android.widget.TextView" content-desc="" clickable="false" bounds="[940,120][1060,180]"/>
+<node text="Aum" class="android.widget.TextView" content-desc="" clickable="false" bounds="[40,250][240,310]"/>
+<node text="t00002" class="android.widget.TextView" content-desc="" clickable="false" bounds="[940,250][1060,310]"/>
+<node text="" class="android.widget.ImageView" content-desc="payment slip image" clickable="false" bounds="[280,310][460,460]"/>
+</node></hierarchy>
