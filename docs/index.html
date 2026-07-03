@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Screen Ghost — The Cat-and-Mouse Ends Here</title>
-<meta name="description" content="How Screen Ghost solves the Page365 bottleneck: integrate at the one interface a platform cannot revoke.">
+<title>Screen Ghost — Evidence Kernel</title>
+<meta name="description" content="Screen Ghost decomposes the 'the UI can't be the API' objection into tested categories, receipts, and explicitly frozen claims. No hardware, live-seller, or business proof claimed.">
 <style>
   :root {
     --page:        #f9f9f7;
@@ -161,15 +161,21 @@
 <header class="hero">
   <div class="wrap">
     <div class="kicker">Screen Ghost &middot; the UI is the API</div>
-    <h1>The cat-and-mouse ends here.</h1>
+    <h1>The objection, decomposed.</h1>
     <p>
-      Page365 fought for years to give LINE sellers a stable frontend, reverse-engineering
-      protocols that the platform kept changing — sometimes specifically to lock integrators out.
-      Every break meant merchant downtime and engineer-weeks of catch-up. That war has a
-      structural exit, and it isn't a better adapter.
+      "The UI can't be the API — Thai is unreliable, vision is slow, payloads are
+      complex, it won't scale, IPs get blocked, users lack infrastructure." That was
+      one impossibility verdict bundling many separable problems. Screen Ghost doesn't
+      argue it. It splits it into categories that are each <em>tested</em>, receipted,
+      or explicitly frozen — so a remaining objection has to arrive as a failing
+      fixture, a resolver case, or a product issue.
     </p>
     <div class="hero-number">1</div>
-    <div class="hero-number-label">the number of interfaces a platform cannot revoke: the one its paying customers use</div>
+    <div class="hero-number-label">the durable interface a platform cannot revoke: the one its paying customers use</div>
+    <p style="font-size:0.82rem;color:var(--text-muted);margin-top:14px">
+      Not hardware proof. Not live-seller proof. Not business proof. See
+      <a href="https://github.com/BigBirdReturns/ScreenGhost/blob/main/docs/CLAIM_BOUNDARIES.md">CLAIM_BOUNDARIES.md</a>.
+    </p>
   </div>
 </header>
 
@@ -350,7 +356,7 @@
     <h3 style="margin-top:22px">Scale topology — local hands, cloud aggregates</h3>
     <div class="kpis">
       <div class="card tile"><div class="label">Where the hands run</div><div class="value">The seller's phone</div><div class="delta">already always-on, already running the app — no PC, no device farm</div></div>
-      <div class="card tile"><div class="label">What the cloud does</div><div class="value">Aggregate only</div><div class="delta">moves already-structured events; 50k sessions is unremarkable for one backend</div></div>
+      <div class="card tile"><div class="label">What the cloud does</div><div class="value">Aggregate only</div><div class="delta">moves already-structured events (architecture — hosted scale is a frozen claim, not demonstrated here)</div></div>
       <div class="card tile"><div class="label">Shared origin IPs to fingerprint</div><div class="value">0</div><div class="delta">every action comes from the seller's own device, account, and IP</div></div>
     </div>
     <div class="note">
@@ -367,6 +373,37 @@
   </div>
 </section>
 
+<section>
+  <div class="wrap">
+    <div class="kicker">Proven / frozen — the whole point</div>
+    <h2>Every claim is a category, a receipt, or explicitly frozen</h2>
+    <p>
+      The argument doesn't ask for belief. It ships a verifier. Same seed → same
+      numbers, in any process.
+    </p>
+    <div class="asym-scroll card" style="padding:6px 6px 2px">
+      <table class="asym">
+        <thead><tr><th scope="col">Claim</th><th scope="col">Status</th><th scope="col">How to check</th></tr></thead>
+        <tbody>
+          <tr><td>Exact Thai preserved, no OCR on the text path</td><td><strong>Proven</strong> [1]/[2a]</td><td><code>adapter_conformance.py --all</code></td></tr>
+          <tr><td>Order-event recall under labeled load; honest boundary</td><td><strong>Proven</strong> [1]</td><td><code>population_bench.py</code></td></tr>
+          <tr><td>View-tree recovery == in-process (rendered XML)</td><td><strong>Proven</strong> [2a]</td><td><code>parity_bench.py</code></td></tr>
+          <tr><td>Reviewable ledger: propose → correct → export → replay</td><td><strong>Proven</strong></td><td><code>operator_demo.py</code></td></tr>
+          <tr><td>App-surface differences → one named adapter cause</td><td><strong>Proven</strong> [2a]</td><td><code>adapter_conformance.py</code></td></tr>
+          <tr><td>Real hardware · real apps · seller-hour lift</td><td><strong>Frozen</strong> [2b]/[3]</td><td>not claimed</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:14px">
+      One command runs it all: <code>python examples/verify_release.py</code>. Full list of
+      what is <em>not</em> claimed:
+      <a href="https://github.com/BigBirdReturns/ScreenGhost/blob/main/docs/CLAIM_BOUNDARIES.md">CLAIM_BOUNDARIES.md</a>
+      &middot; per-objection breakdown:
+      <a href="https://github.com/BigBirdReturns/ScreenGhost/blob/main/docs/OBJECTION_MATRIX.md">OBJECTION_MATRIX.md</a>.
+    </p>
+  </div>
+</section>
+
 <footer>
   <div class="wrap">
     <p style="color:var(--text-secondary)">
@@ -375,7 +412,9 @@
       ever leave the device.
       <a href="https://github.com/BigBirdReturns/ScreenGhost">github.com/BigBirdReturns/ScreenGhost</a>
     </p>
-    <p>Simulation and cost figures are illustrative, drawn from the multi-protocol integration wars (Trillian vs. AOL, and every fight like it since).</p>
+    <p>Simulation and cost figures are illustrative, drawn from the multi-protocol integration wars
+      (Trillian vs. AOL, and every fight like it since). They are narrative, not a scale, hardware, or
+      business claim — see <a href="https://github.com/BigBirdReturns/ScreenGhost/blob/main/docs/CLAIM_BOUNDARIES.md">CLAIM_BOUNDARIES.md</a>.</p>
   </div>
 </footer>
 
