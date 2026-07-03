@@ -217,6 +217,21 @@ OBJECTIONS: List[Objection] = [
 ]
 
 
+# One-line gloss per objection — owned here so the demo never restates claims.
+MEANINGS: Dict[str, str] = {
+    "THAI_TEXT_RELIABILITY": "exact Unicode preserved in tested paths",
+    "VISION_LATENCY": "no OCR/model on text capture path",
+    "NON_TEXT_PAYLOADS": "event classes modeled; full real-app coverage not claimed",
+    "LIVE_COMMERCE_BURST": "keeps up inside modeled window; fails openly past it",
+    "CENTRAL_IP_BLOCKING": "distributed design removes shared origin; hardware not run",
+    "USER_INFRASTRUCTURE": "phone-first design specified; hardware not run",
+    "WINDOW_MANAGEMENT": "dedupe/window model measured, not handwaved",
+    "PARSER_GENERALIZATION": "adversarial failures exposed",
+    "APP_SURFACE_DRIFT": "rendered drift tested; real apps frozen",
+    "BUSINESS_OUTCOME": "no seller-hour claim",
+}
+
+
 def gather_evidence(n: int = 40) -> Dict:
     """Run the cheap live checks the refinable objections depend on."""
     from core.android_fixture import run_parity

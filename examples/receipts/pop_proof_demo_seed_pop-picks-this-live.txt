@@ -1,7 +1,7 @@
 
-==================================================================
+======================================================================
 ACT I — THE OBJECTION (decomposed)
-==================================================================
+======================================================================
 One 'you are out of touch' verdict bundled ten separable problems:
   - THAI_TEXT_RELIABILITY
   - VISION_LATENCY
@@ -19,57 +19,60 @@ Rules enforced live:
   2. No rate may be reported without denominator discipline.
   3. No synthetic proof may become a hardware or business proof.
 
-==================================================================
+Pick a seed. Pick a mode. Try to make it lie.
+
+======================================================================
 ACT II — BUILD THE WORLD (fresh from the seed, not replayed)
-==================================================================
-  seed (string)        : 'pop-picks-this-live'
-  seed (int)           : 13499742236955
-  synthetic sellers    : 200
-  cohorts              : 10
-  total messages       : 35393
-  order-bearing msgs   : 24336
-  (denominators kept separate: total vs order-bearing, never merged)
-  cohort distribution  : adversarial=20, bakery=20, clothing=20, collectibles=20, cosmetics=20, homegoods=20, kids=20, livemixed=20, phoneacc=20, secondhand=20
-  adversarial suites   : cancel=681, clean=25821, dup_rows=1334, modify=976, payment_ref=157, repeat_cf=893, spelling=756, stockout_sub=1189, variant_ambig=3586
+======================================================================
+  seed (string)       : 'pop-picks-this-live'
+  seed (int)          : 13499742236955
+  synthetic sellers   : 1000
+  cohorts             : 10
+  total messages      : 166662
+  order-bearing msgs  : 114922
+  (denominators separate: total vs order-bearing, never merged)
+  cohorts     : adversarial=100, bakery=100, clothing=100, collectibles=100, cosmetics=100, homegoods=100, kids=100, livemixed=100, phoneacc=100, secondhand=100
+  adv suites  : cancel=3024, clean=120183, dup_rows=5859, modify=4216, payment_ref=746, repeat_cf=4143, spelling=4124, stockout_sub=5010, variant_ambig=19357
 
-==================================================================
+======================================================================
 ACT III — THE RECEIPT (pipeline, category [1])
-==================================================================
-  recall (order events)   : 92.8%   [num = correct order events / order-bearing msgs]
-  precision               : 85.5%
-  p95 / max capture lat   : 0.00s / 0.00s
-  unicode corruptions     : 0
-  duplicate event rate    : 0.000
-  exact ledger reproduced : 60.5% of sellers
-  where it bleeds (failure surface, exposed):
-     cancel           recall=100.0%  precision=100.0%  false_pos=0
-     modify           recall=100.0%  precision=100.0%  false_pos=0
-     repeat_cf        recall=100.0%  precision=  0.0%  false_pos=893
-     spelling         recall= 27.8%  precision= 27.8%  false_pos=546
-     stockout_sub     recall=100.0%  precision=  0.0%  false_pos=1189
-     variant_ambig    recall= 66.3%  precision= 66.3%  false_pos=1209
+======================================================================
+  recall     : 93.3%   [correct order events / order-bearing msgs]
+  precision  : 86.5%   [correct / emitted order events]
+  p95 / max capture latency : 0.00s / 0.00s
+  unicode corruptions       : 0
+  exact ledger reproduced   : 63.1% of sellers
 
-==================================================================
-ACT IV — VIEW-TREE PARITY (category [2a], NOT live hardware)
-==================================================================
-  parity sample           : 30 sellers rendered to UiAutomator XML
-  max recall delta        : +0.00%  (in-process vs view-tree seam)
-  row-grouping/unicode fails: 0
-  pathological overlap    : recall=38.1%  corruptions=19  (fails in the open, by design)
-  NOTE: this is rendered UiAutomator XML parity. It is NOT live hardware proof [2b].
+======================================================================
+ACT IV — FAILURE ATTRIBUTION  (seed: pop-picks-this-live  — these are YOUR results)
+======================================================================
+  capture-seam baseline recall delta: +0.00%  -> every resolver miss below is parser-domain, not capture
+  per cause (single-cause per error unit):
+     resolver          : 24459
+     row_grouping      : 12
+     dedupe            : 0
+     window_loss       : 98
+     unicode_corruption: 0
+  per suite (resolver domain), sorted by suite:
+     repeat_cf        miss=0     false_pos=4143  -> resolver
+     spelling         miss=2761  false_pos=2761  -> resolver
+     stockout_sub     miss=0     false_pos=5010  -> resolver
+     variant_ambig    miss=4892  false_pos=4892  -> resolver
+  row_grouping/window_loss above were exercised on purpose (pathological overlap, window=2); dedupe & unicode stayed 0.
+  NOTE: rendered UiAutomator XML parity [2a]. NOT live hardware proof [2b].
 
-==================================================================
+======================================================================
 ACT V — BOUNDARY CONDITIONS (must fail openly somewhere)
-==================================================================
+======================================================================
   keeps up  busy stream (3k total/min, ~2.25k order/min)
   keeps up  hot sale (12k total/min)
   FAILS     firehose past window (60k total/min)
   FAILS     visible-window overflow (window=2)
   FAILS     pathological row overlap
 
-==================================================================
+======================================================================
 ACT VI — OBJECTION MATRIX (every objection classified)
-==================================================================
+======================================================================
   [THAI_TEXT_RELIABILITY] PASS  ([2a])
      ALLOWED  : Exact Thai text is preserved through the tested extraction path (view-tree XML -> parse -> group), corruption count 0.
      FORBIDDEN: That every real app surface exposes perfect Thai nodes — unproven until [2b-2].
@@ -111,9 +114,9 @@ ACT VI — OBJECTION MATRIX (every objection classified)
      FORBIDDEN: Any seller-hour lift, adoption, or revenue claim.
      next     : [3] one consented live seller, before/after.
 
-==================================================================
+======================================================================
 ACT VII — FINAL LEDGER
-==================================================================
+======================================================================
   objection                  status         what this means
   THAI_TEXT_RELIABILITY      PASS           exact Unicode preserved in tested paths
   VISION_LATENCY             PASS           no OCR/model on text capture path
