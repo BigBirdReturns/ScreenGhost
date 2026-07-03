@@ -1,0 +1,129 @@
+
+==================================================================
+ACT I — THE OBJECTION (decomposed)
+==================================================================
+One 'you are out of touch' verdict bundled ten separable problems:
+  - THAI_TEXT_RELIABILITY
+  - VISION_LATENCY
+  - NON_TEXT_PAYLOADS
+  - LIVE_COMMERCE_BURST
+  - CENTRAL_IP_BLOCKING
+  - USER_INFRASTRUCTURE
+  - WINDOW_MANAGEMENT
+  - PARSER_GENERALIZATION
+  - APP_SURFACE_DRIFT
+  - BUSINESS_OUTCOME
+
+Rules enforced live:
+  1. No objection may borrow evidence from another category.
+  2. No rate may be reported without denominator discipline.
+  3. No synthetic proof may become a hardware or business proof.
+
+==================================================================
+ACT II — BUILD THE WORLD (fresh from the seed, not replayed)
+==================================================================
+  seed (string)        : 'pop-picks-this-live'
+  seed (int)           : 13499742236955
+  synthetic sellers    : 200
+  cohorts              : 10
+  total messages       : 35393
+  order-bearing msgs   : 24336
+  (denominators kept separate: total vs order-bearing, never merged)
+  cohort distribution  : adversarial=20, bakery=20, clothing=20, collectibles=20, cosmetics=20, homegoods=20, kids=20, livemixed=20, phoneacc=20, secondhand=20
+  adversarial suites   : cancel=681, clean=25821, dup_rows=1334, modify=976, payment_ref=157, repeat_cf=893, spelling=756, stockout_sub=1189, variant_ambig=3586
+
+==================================================================
+ACT III — THE RECEIPT (pipeline, category [1])
+==================================================================
+  recall (order events)   : 92.8%   [num = correct order events / order-bearing msgs]
+  precision               : 85.5%
+  p95 / max capture lat   : 0.00s / 0.00s
+  unicode corruptions     : 0
+  duplicate event rate    : 0.000
+  exact ledger reproduced : 60.5% of sellers
+  where it bleeds (failure surface, exposed):
+     cancel           recall=100.0%  precision=100.0%  false_pos=0
+     modify           recall=100.0%  precision=100.0%  false_pos=0
+     repeat_cf        recall=100.0%  precision=  0.0%  false_pos=893
+     spelling         recall= 27.8%  precision= 27.8%  false_pos=546
+     stockout_sub     recall=100.0%  precision=  0.0%  false_pos=1189
+     variant_ambig    recall= 66.3%  precision= 66.3%  false_pos=1209
+
+==================================================================
+ACT IV — VIEW-TREE PARITY (category [2a], NOT live hardware)
+==================================================================
+  parity sample           : 30 sellers rendered to UiAutomator XML
+  max recall delta        : +0.00%  (in-process vs view-tree seam)
+  row-grouping/unicode fails: 0
+  pathological overlap    : recall=38.1%  corruptions=19  (fails in the open, by design)
+  NOTE: this is rendered UiAutomator XML parity. It is NOT live hardware proof [2b].
+
+==================================================================
+ACT V — BOUNDARY CONDITIONS (must fail openly somewhere)
+==================================================================
+  keeps up  busy stream (3k total/min, ~2.25k order/min)
+  keeps up  hot sale (12k total/min)
+  FAILS     firehose past window (60k total/min)
+  FAILS     visible-window overflow (window=2)
+  FAILS     pathological row overlap
+
+==================================================================
+ACT VI — OBJECTION MATRIX (every objection classified)
+==================================================================
+  [THAI_TEXT_RELIABILITY] PASS  ([2a])
+     ALLOWED  : Exact Thai text is preserved through the tested extraction path (view-tree XML -> parse -> group), corruption count 0.
+     FORBIDDEN: That every real app surface exposes perfect Thai nodes — unproven until [2b-2].
+     next     : [2b-2] benign Thai threads on a real LINE/FB surface.
+  [VISION_LATENCY] PASS  ([1])
+     ALLOWED  : The text-capture path invokes no model; p95 capture latency is sub-second at tested volumes.
+     FORBIDDEN: That interpretation of genuinely ambiguous language needs no model ever — some edges will.
+     next     : Hold: keep the capture path model-free as features grow.
+  [NON_TEXT_PAYLOADS] PARTIAL  ([1]/[2a])
+     ALLOWED  : Non-text nodes are typed (sticker/location/attachment) from content-desc; payment-screenshot refs are surfaced as order-bearing-but-unstructured, not silently dropped.
+     FORBIDDEN: That the artwork/bytes behind a sticker or slip are decoded — they are typed, not read.
+     next     : [2b-2] confirm real content-desc strings per platform.
+  [LIVE_COMMERCE_BURST] PASS  ([1]/[2a])
+     ALLOWED  : Full order recall with headroom at busy/hot volumes; honest scroll-loss reported past the visible window.
+     FORBIDDEN: That an arbitrary firehose never loses a message — it does, and the boundary says so.
+     next     : [2b-1] measure real dump cadence on hardware.
+  [CENTRAL_IP_BLOCKING] ARCHITECTURAL  ([2b-1])
+     ALLOWED  : No shared origin is required by design; there is no central surface to fingerprint.
+     FORBIDDEN: That every platform policy permits every automation mode — a ToS/account question, not an IP one.
+     next     : [2b-1] device-local runner on real hardware.
+  [USER_INFRASTRUCTURE] ARCHITECTURAL  ([2b-1])
+     ALLOWED  : The design assumes only the seller's own phone.
+     FORBIDDEN: That a working on-device build exists today — it is not yet run on hardware.
+     next     : [2b-1] run the capture path on a physical device.
+  [WINDOW_MANAGEMENT] PASS  ([2a])
+     ALLOWED  : Scroll replay is deduped and visible-window loss is reported; one device = one seller surface.
+     FORBIDDEN: That a single device multiplexes many sellers — it does not, by design.
+     next     : [2b-2] real live-sale layout sampling.
+  [PARSER_GENERALIZATION] PARTIAL  ([1])
+     ALLOWED  : Capture-seam delta is ~0, so current failures are attributed to parser/resolver and reported per adversarial suite.
+     FORBIDDEN: That the parser generalizes to real Thai merchant language — the generator shares its grammar; unproven.
+     next     : [2b-2]/[3] evaluate on real (consented) merchant text.
+  [APP_SURFACE_DRIFT] PARTIAL  ([2a]->[2b-2])
+     ALLOWED  : Recovery survives font scale, display size, bubble width, and dark mode in the fixture; pathological overlap fails openly.
+     FORBIDDEN: That real app trees group identically to the fixture — that is exactly what [2b-2] must test.
+     next     : [2b-1] then [2b-2] on real surfaces.
+  [BUSINESS_OUTCOME] FROZEN  ([3])
+     ALLOWED  : Nothing about revenue or adoption.
+     FORBIDDEN: Any seller-hour lift, adoption, or revenue claim.
+     next     : [3] one consented live seller, before/after.
+
+==================================================================
+ACT VII — FINAL LEDGER
+==================================================================
+  objection                  status         what this means
+  THAI_TEXT_RELIABILITY      PASS           exact Unicode preserved in tested paths
+  VISION_LATENCY             PASS           no OCR/model on text capture path
+  NON_TEXT_PAYLOADS          PARTIAL        event classes modeled; full real-app coverage not claimed
+  LIVE_COMMERCE_BURST        PASS           keeps up inside modeled window; fails openly past it
+  CENTRAL_IP_BLOCKING        ARCHITECTURAL  distributed design removes shared origin; hardware not run
+  USER_INFRASTRUCTURE        ARCHITECTURAL  phone-first design specified; hardware not run
+  WINDOW_MANAGEMENT          PASS           dedupe/window model measured, not handwaved
+  PARSER_GENERALIZATION      PARTIAL        adversarial failures exposed
+  APP_SURFACE_DRIFT          PARTIAL        rendered drift tested; real apps frozen
+  BUSINESS_OUTCOME           FROZEN         no seller-hour claim
+
+Result: the critique fails as a universal impossibility claim. Remaining work is adapter and business proof, not proof that the solution space exists.
