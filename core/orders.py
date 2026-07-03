@@ -95,6 +95,54 @@ class OrderEvent:
         return cls(m.id, m.sender, m.ts, m.text, is_confirm, item, qty)
 
 
+class EventType:
+    """What a comment does to the order ledger."""
+
+    ORDER = "order"    # a new confirmation
+    MODIFY = "modify"  # change quantity on an existing order
+    CANCEL = "cancel"  # withdraw an order
+    CHATTER = "chatter"  # not order-bearing
+
+
+CANCEL_KEYWORDS: Tuple[str, ...] = ("ยกเลิก", "ไม่เอาแล้ว", "cancel")
+MODIFY_KEYWORDS: Tuple[str, ...] = ("เปลี่ยนเป็น", "แก้เป็น", "เพิ่มเป็น", "ลดเป็น", "change to")
+
+
+def classify_event(
+    text: str, confirm_keywords: Sequence[str] = DEFAULT_CONFIRM_KEYWORDS
+) -> str:
+    """Cancel > modify > order > chatter. Deterministic, no model."""
+    low = text.lower()
+    if any(k.lower() in low for k in CANCEL_KEYWORDS):
+        return EventType.CANCEL
+    if any(k.lower() in low for k in MODIFY_KEYWORDS):
+        return EventType.MODIFY
+    if parse_confirm(text, confirm_keywords)[0]:
+        return EventType.ORDER
+    return EventType.CHATTER
+
+
+def reduce_ledger(
+    entries: Iterable[Tuple[str, str, Optional[str], Optional[int]]]
+) -> Dict[Tuple[str, str], int]:
+    """Fold (event_type, buyer, sku, qty) rows into a final order ledger.
+
+    ORDER sets a quantity, MODIFY replaces it, CANCEL removes the line. The same
+    reducer runs over ground-truth labels and over emitted events, so a ledger
+    mismatch is a real accounting failure, not a definitional one.
+    """
+    ledger: Dict[Tuple[str, str], int] = {}
+    for etype, buyer, sku, qty in entries:
+        if sku is None:
+            continue
+        key = (buyer, sku)
+        if etype == EventType.CANCEL:
+            ledger.pop(key, None)
+        elif etype in (EventType.ORDER, EventType.MODIFY) and qty is not None:
+            ledger[key] = qty
+    return {k: v for k, v in ledger.items() if v > 0}
+
+
 class OrderBook:
     """Exactly-once emission of order events across repeated polls.
 
