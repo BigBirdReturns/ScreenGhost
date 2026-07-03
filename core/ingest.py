@@ -206,8 +206,12 @@ def simulate_keepup(
     unicode_corruptions = 0
 
     polls = int(duration_s / poll_interval_s) + 1
-    for k in range(polls):
-        arrived_by_now = min(total, int(arrival_rate * k * poll_interval_s))
+    # Append a guaranteed final read at `total` so int() truncation on the last
+    # scheduled poll can't fake a tail miss (a genuine firehose still drops
+    # messages mid-stream where step > window).
+    arrived_schedule = [min(total, int(arrival_rate * k * poll_interval_s))
+                        for k in range(polls)] + [total]
+    for k, arrived_by_now in enumerate(arrived_schedule):
         lo = max(0, arrived_by_now - window)
         visible = stream[lo:arrived_by_now]
         for ev in book.ingest(visible):

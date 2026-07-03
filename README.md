@@ -311,6 +311,33 @@ contradiction) — are documented honestly in
 before assuming this scales to high-volume, multilingual, hosted messaging: it
 does not, and the gap is structural, not a roadmap item.
 
+## The objection matrix — closing the solution space
+
+ScreenGhost does not ask a central scraper to win a cat-and-mouse war against
+every platform. It treats **each seller's own phone as the execution boundary**.
+The phone already owns the account, IP, app session, and screen state.
+ScreenGhost's job is to turn that local screen state into a replayable event
+ledger **without OCR on the text path**. That is the distinction the usual
+critique misses: **extraction vs distribution**. One design harvests centralized
+state and inherits shared-origin blocking, PC requirements, and window
+multiplexing; the other lets every seller own their own local entropy.
+
+So the critique — "Thai OCR is unreliable, vision is slow, stickers matter, 50k
+concurrency, uptime, IP blocking, no user PCs" — was overbroad: it mistook one
+extraction architecture for the whole design space. Rather than argue it, the
+project **encodes** it. Every objection is a named row with a test, a receipt,
+an *allowed* claim, and a *forbidden* claim, in
+[`docs/OBJECTION_MATRIX.md`](docs/OBJECTION_MATRIX.md). Two rules keep it honest:
+
+- **Denominator discipline** — no rate without saying total vs order-bearing
+  messages vs UI nodes vs emitted events.
+- **No category borrows trust** — synthetic ≠ device ≠ real-app ≠ business.
+
+Live status: `python examples/objection_receipt.py --live`. What is *proven*
+today is pipeline integrity `[1]` and rendered view-tree parity `[2a]`; real
+hardware `[2b-1]`, real apps `[2b-2]`, and seller-hour business lift `[3]` are
+deliberately **frozen and not claimed**.
+
 ## License
 
 MIT
