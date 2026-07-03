@@ -43,8 +43,16 @@ _TRANSITIONS: Dict[str, set] = {
 LEDGER_STATES = {ACCEPTED, CORRECTED, FULFILLED}
 
 
+SCHEMA_VERSION = 1
+APP_VERSION = "demo-rc0"
+
+
 class TransitionError(ValueError):
     pass
+
+
+class SchemaError(RuntimeError):
+    """A store's schema version is newer than this build supports (fail closed)."""
 
 
 _SCHEMA = """
@@ -78,6 +86,7 @@ CREATE TABLE IF NOT EXISTS ledger_snapshots (
 CREATE TABLE IF NOT EXISTS exports (
     id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT, kind TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
 """
 
 _CORRECTABLE = {"buyer", "sku", "qty", "variant"}
@@ -91,7 +100,30 @@ class LedgerStore:
         self.db = sqlite3.connect(path, check_same_thread=False)
         self.db.row_factory = sqlite3.Row
         self.db.executescript(_SCHEMA)
+        self._init_meta()
         self.db.commit()
+
+    def _init_meta(self) -> None:
+        row = self.db.execute("SELECT value FROM meta WHERE key='schema_version'").fetchone()
+        if row is None:
+            self.db.execute(
+                "INSERT INTO meta(key,value) VALUES "
+                "('schema_version',?),('app_version',?),"
+                "('created_at_utc', strftime('%Y-%m-%dT%H:%M:%SZ','now'))",
+                (str(SCHEMA_VERSION), APP_VERSION))
+            return
+        found = int(row["value"])
+        if found > SCHEMA_VERSION:
+            raise SchemaError(
+                f"store schema v{found} is newer than this build supports "
+                f"(v{SCHEMA_VERSION}). Upgrade ScreenGhost to open it.")
+
+    def schema_version(self) -> int:
+        return int(self.db.execute(
+            "SELECT value FROM meta WHERE key='schema_version'").fetchone()["value"])
+
+    def meta(self) -> Dict[str, str]:
+        return {r["key"]: r["value"] for r in self.db.execute("SELECT key,value FROM meta")}
 
     # ---- reference data -------------------------------------------------- #
     def add_seller(self, seller_id: str, cohort: str = "") -> None:

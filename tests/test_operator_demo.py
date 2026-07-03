@@ -26,7 +26,7 @@ def test_demo_fixture_loads_all_scenarios():
 
 def test_operator_demo_runs_ten_sellers(tmp_path):
     from examples.operator_demo import run
-    receipt, paths, receipt_file, _store = run("op", 10, str(tmp_path))
+    receipt, paths, receipt_file, _store, _worlds = run("op", 10, str(tmp_path))
     assert receipt["sellers"] == 10
     assert receipt["replay_matched"] is True
     for k in ("orders.csv", "corrections.csv", "captures.csv", "receipt.txt"):
@@ -92,6 +92,6 @@ def test_replay_reproduces_final_ledger():
 
 def test_operator_receipt_makes_no_hardware_or_business_claim(tmp_path):
     from examples.operator_demo import run
-    _r, _p, receipt_file, _s = run("nc", 5, str(tmp_path))
+    _r, _p, receipt_file, _s, _w = run("nc", 5, str(tmp_path))
     txt = open(receipt_file, encoding="utf-8").read().lower()
     assert "not hardware proof" in txt and "not business proof" in txt

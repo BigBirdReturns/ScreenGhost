@@ -1,26 +1,28 @@
-ScreenGhost — Operator Demo receipt
-NOT hardware proof. NOT business proof. Product slice on the proof spine.
+ScreenGhost — Reviewable Order Ledger (Demo RC0) receipt
+NOT hardware proof. NOT business proof. NOT live-seller proof.
 
-source: fixture:seller_world_demo_seed.json
-  seed                                    : operator
-  sellers                                 : 3
-  total_messages                          : 15
-  order_bearing_messages                  : 12
-  proposed_events                         : 0
-  accepted_events                         : 11
-  rejected_events                         : 1
-  corrected_events                        : 0
-  needs_info_events                       : 0
-  unicode_corruptions                     : 0
-  duplicate_events                        : 0
-  ledger_reproduction_before_correction   : 0.6666666666666666
-  ledger_reproduction_after_correction    : 0.6666666666666666
-  replay_matched                          : True
-  proposed_incomplete_events              : 0
-  cancelled_events                        : 0
-  fulfilled_events                        : 0
+  seed                                  : op
+  source                                : fixture:seller_world_demo_seed.json
+  sellers                               : 3
+  total_messages                        : 15
+  order_bearing_messages                : 12
+  proposed_events                       : 0
+  proposed_incomplete_events            : 0
+  accepted_events                       : 11
+  corrected_events                      : 0
+  rejected_events                       : 1
+  needs_info_events                     : 0
+  cancelled_events                      : 0
+  fulfilled_events                      : 0
+  unicode_corruptions                   : 0
+  duplicate_events                      : 0
+  ledger_reproduction_before_correction : 0.6666666666666666
+  ledger_reproduction_after_correction  : 0.6666666666666666
+  replay_matched                        : True
+  schema_version                        : 1
+  proof_claims_forbidden                : hardware proof, business proof, live-seller proof
   export_paths:
-     orders.csv      : /tmp/opfix/orders.csv
-     corrections.csv : /tmp/opfix/corrections.csv
-     captures.csv    : /tmp/opfix/captures.csv
-     receipt.txt     : /tmp/opfix/receipt.txt
+     orders.csv      : log/opfix/orders.csv
+     corrections.csv : log/opfix/corrections.csv
+     captures.csv    : log/opfix/captures.csv
+     receipt.txt     : log/opfix/receipt.txt

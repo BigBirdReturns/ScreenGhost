@@ -21,6 +21,7 @@ Deterministic: seeded ``random.Random`` so every receipt is reproducible.
 """
 from __future__ import annotations
 
+import hashlib
 import random
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
@@ -186,7 +187,10 @@ def _emit(labels: List[LabeledMessage], seq: List[Tuple[str, str, Optional[str],
 def generate_stream(profile: SellerProfile, seed: int = 0
                     ) -> SellerWorld:
     """Produce a labeled comment stream + ground-truth ledger for one seller."""
-    rng = random.Random(hash((profile.seller_id, seed)) & 0xFFFFFFFF)
+    # Stable, process-independent seed (builtin hash() is salted per process,
+    # which silently broke cross-run receipt reproducibility).
+    _digest = hashlib.sha256(f"{profile.seller_id}|{seed}".encode("utf-8")).digest()
+    rng = random.Random(int.from_bytes(_digest[:8], "big"))
     adv = profile.adversarial
     labels: List[LabeledMessage] = []
     ledger_seq: List[Tuple[str, str, Optional[str], Optional[int]]] = []

@@ -1,28 +1,28 @@
 ScreenGhost — Reviewable Order Ledger (Demo RC0) receipt
 NOT hardware proof. NOT business proof. NOT live-seller proof.
 
-  seed                                  : pop-picks-this-live
-  source                                : seed:pop-picks-this-live
+  seed                                  : op
+  source                                : seed:op
   sellers                               : 10
-  total_messages                        : 1977
-  order_bearing_messages                : 1504
+  total_messages                        : 1469
+  order_bearing_messages                : 1066
   proposed_events                       : 0
   proposed_incomplete_events            : 0
-  accepted_events                       : 1363
-  corrected_events                      : 80
-  rejected_events                       : 141
+  accepted_events                       : 1011
+  corrected_events                      : 32
+  rejected_events                       : 55
   needs_info_events                     : 0
   cancelled_events                      : 0
   fulfilled_events                      : 0
   unicode_corruptions                   : 0
-  duplicate_events                      : 89
+  duplicate_events                      : 53
   ledger_reproduction_before_correction : 0.6
   ledger_reproduction_after_correction  : 0.8
   replay_matched                        : True
   schema_version                        : 1
   proof_claims_forbidden                : hardware proof, business proof, live-seller proof
   export_paths:
-     orders.csv      : log/oppp/orders.csv
-     corrections.csv : log/oppp/corrections.csv
-     captures.csv    : log/oppp/captures.csv
-     receipt.txt     : log/oppp/receipt.txt
+     orders.csv      : log/operator_demo/orders.csv
+     corrections.csv : log/operator_demo/corrections.csv
+     captures.csv    : log/operator_demo/captures.csv
+     receipt.txt     : log/operator_demo/receipt.txt

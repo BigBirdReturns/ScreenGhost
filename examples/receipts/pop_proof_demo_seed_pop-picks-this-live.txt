@@ -28,36 +28,36 @@ ACT II — BUILD THE WORLD (fresh from the seed, not replayed)
   seed (int)          : 13499742236955
   synthetic sellers   : 1000
   cohorts             : 10
-  total messages      : 166662
-  order-bearing msgs  : 114922
+  total messages      : 166721
+  order-bearing msgs  : 114857
   (denominators separate: total vs order-bearing, never merged)
   cohorts     : adversarial=100, bakery=100, clothing=100, collectibles=100, cosmetics=100, homegoods=100, kids=100, livemixed=100, phoneacc=100, secondhand=100
-  adv suites  : cancel=3024, clean=120183, dup_rows=5859, modify=4216, payment_ref=746, repeat_cf=4143, spelling=4124, stockout_sub=5010, variant_ambig=19357
+  adv suites  : cancel=3167, clean=120254, dup_rows=5856, modify=4222, payment_ref=689, repeat_cf=4035, spelling=4054, stockout_sub=5031, variant_ambig=19413
 
 ======================================================================
 ACT III — THE RECEIPT (pipeline, category [1])
 ======================================================================
-  recall     : 93.3%   [correct order events / order-bearing msgs]
-  precision  : 86.5%   [correct / emitted order events]
+  recall     : 93.5%   [correct order events / order-bearing msgs]
+  precision  : 86.6%   [correct / emitted order events]
   p95 / max capture latency : 0.00s / 0.00s
   unicode corruptions       : 0
-  exact ledger reproduced   : 63.1% of sellers
+  exact ledger reproduced   : 61.6% of sellers
 
 ======================================================================
 ACT IV — FAILURE ATTRIBUTION  (seed: pop-picks-this-live  — these are YOUR results)
 ======================================================================
   capture-seam baseline recall delta: +0.00%  -> every resolver miss below is parser-domain, not capture
   per cause (single-cause per error unit):
-     resolver          : 24459
-     row_grouping      : 12
+     resolver          : 24036
+     row_grouping      : 19
      dedupe            : 0
-     window_loss       : 98
+     window_loss       : 104
      unicode_corruption: 0
   per suite (resolver domain), sorted by suite:
-     repeat_cf        miss=0     false_pos=4143  -> resolver
-     spelling         miss=2761  false_pos=2761  -> resolver
-     stockout_sub     miss=0     false_pos=5010  -> resolver
-     variant_ambig    miss=4892  false_pos=4892  -> resolver
+     repeat_cf        miss=0     false_pos=4035  -> resolver
+     spelling         miss=2679  false_pos=2679  -> resolver
+     stockout_sub     miss=0     false_pos=5031  -> resolver
+     variant_ambig    miss=4806  false_pos=4806  -> resolver
   row_grouping/window_loss above were exercised on purpose (pathological overlap, window=2); dedupe & unicode stayed 0.
   NOTE: rendered UiAutomator XML parity [2a]. NOT live hardware proof [2b].
 

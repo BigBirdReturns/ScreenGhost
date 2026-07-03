@@ -11,16 +11,16 @@ A parity delta of ~0 means failures are parser/resolver, not the capture seam.
 RENDERED SELLER-WORLD PARITY  [1] in-process  vs  [2a] view-tree seam
 cohort        sell ip_recall seam_recall     d  ip_prec seam_prec corrupt seam_ledgr
 ------------------------------------------------------------------------------------
-adversarial     10     51.3%       51.3%  +0.0    35.9%     35.9%       0         0%
+adversarial     10     48.3%       48.3%  +0.0    33.6%     33.6%       0         0%
 bakery          10    100.0%      100.0%  +0.0   100.0%    100.0%       0       100%
-clothing        10     94.5%       94.5%  +0.0    94.5%     94.5%       0        30%
+clothing        10     94.3%       94.3%  +0.0    94.3%     94.3%       0        30%
 collectibles    10    100.0%      100.0%  +0.0   100.0%    100.0%       0         0%
-cosmetics       10     95.2%       95.2%  +0.0    95.2%     95.2%       0        50%
+cosmetics       10     93.4%       93.4%  +0.0    93.4%     93.4%       0        50%
 homegoods       10    100.0%      100.0%  +0.0   100.0%    100.0%       0       100%
 kids            10    100.0%      100.0%  +0.0   100.0%    100.0%       0       100%
-livemixed       10    100.0%      100.0%  +0.0    84.0%     84.0%       0       100%
-phoneacc        10    100.0%      100.0%  +0.0    80.2%     80.2%       0       100%
-secondhand      10     88.2%       88.2%  +0.0    88.2%     88.2%       0        30%
+livemixed       10    100.0%      100.0%  +0.0    81.2%     81.2%       0       100%
+phoneacc        10    100.0%      100.0%  +0.0    79.1%     79.1%       0       100%
+secondhand      10     88.7%       88.7%  +0.0    88.7%     88.7%       0        60%
 
 DRIFT / HOSTILITY  [does the seam survive display change?]
 condition                   recall  corrupt  ledger
@@ -31,8 +31,8 @@ font 0.85x                  100.0%        0    True
 narrow bubble 280px         100.0%        0    True
 dark mode                   100.0%        0    True
 small display 720w          100.0%        0    True
-PATHOLOGICAL row overlap      0.0%       85   False
+PATHOLOGICAL row overlap      0.0%       84   False
 
 SEAM BOUNDARY  [must still fail openly past the visible window]
   window=400  recall= 100.0%  (keeps up)
-  window=2    recall=  33.5%  (scroll-loss, reported)
+  window=2    recall=  33.0%  (scroll-loss, reported)
