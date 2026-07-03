@@ -182,3 +182,14 @@ UI" — it is a protocol client with extra steps. Which is the point the
 multi-protocol history actually teaches: the UI is the interface a vendor can't
 *revoke*, but it was never the interface you'd choose to run a high-volume
 integration on if a protocol was available.
+
+**Update — there is a way through, and it is not "a better OCR model."** The
+four requirements above are answered by dropping the screenshot-first mechanism
+for a layered extraction stack (OS view tree → clipboard/copy → VLM only for
+genuine pixels) and a local-first topology (hands on each seller's own always-on
+phone, cloud aggregates already-structured events). That removes the
+`local-hands ⊥ hosted-scale` contradiction in §5 and makes Thai exact by never
+turning text into an image. The full spec — including the two risks that can
+still kill it (OS accessibility policy, and platform ToS/account bans) — is in
+[`scaling-architecture.md`](scaling-architecture.md). Read both: this file is
+the honest floor, that file is the honest ceiling.
