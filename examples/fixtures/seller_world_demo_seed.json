@@ -1,0 +1,73 @@
+{
+  "_note": "Deterministic demo fixture for operator repeatability only. The adversarial proof demo (pop_proof_demo.py) still generates fresh worlds from the operator seed. Not hardware proof, not business proof.",
+  "sellers": [
+    {
+      "seller_id": "clean-shop",
+      "cohort": "bakery",
+      "traffic": "normal",
+      "channel": "line",
+      "catalog": [
+        {"sku": "C01", "name": "เค้กวันเกิด", "aliases": ["เค้ก", "cake"], "variants": [], "price": 350, "stock": 1},
+        {"sku": "C02", "name": "คุกกี้", "aliases": ["cookie"], "variants": [], "price": 120, "stock": 1}
+      ],
+      "buyers": [
+        {"buyer_id": "clean_b1", "display_name": "Nok"},
+        {"buyer_id": "clean_b2", "display_name": "Ann"}
+      ],
+      "messages": [
+        {"buyer_id": "clean_b1", "buyer_display": "Nok", "ts": "t00001", "text": "CF C01 x2 ค่ะ", "order": true, "event": "order", "sku": "C01", "qty": 2, "variant": null, "should_emit": true, "adversarial": null},
+        {"buyer_id": "clean_b2", "buyer_display": "Ann", "ts": "t00002", "text": "cf cookie x1 คะ", "order": true, "event": "order", "sku": "C02", "qty": 1, "variant": null, "should_emit": true, "adversarial": null},
+        {"buyer_id": "clean_b1", "buyer_display": "Nok", "ts": "t00003", "text": "สวยจังค่ะ", "order": false, "event": "chatter", "sku": null, "qty": null, "variant": null, "should_emit": false, "adversarial": null}
+      ]
+    },
+    {
+      "seller_id": "messy-shop",
+      "cohort": "cosmetics",
+      "traffic": "busy",
+      "channel": "fb_comment",
+      "catalog": [
+        {"sku": "A01", "name": "เซรั่มหน้าใส", "aliases": ["serum", "เซรั่ม"], "variants": [], "price": 390, "stock": 1},
+        {"sku": "A02", "name": "ครีมกันแดด", "aliases": ["กันแดด", "sunscreen"], "variants": [], "price": 290, "stock": 1}
+      ],
+      "buyers": [
+        {"buyer_id": "messy_b1", "display_name": "Ploy"},
+        {"buyer_id": "messy_b2", "display_name": "Bee"},
+        {"buyer_id": "messy_b3", "display_name": "Mai"}
+      ],
+      "messages": [
+        {"buyer_id": "messy_b1", "buyer_display": "Ploy", "ts": "t00001", "text": "cf serum x2 ค่ะ", "order": true, "event": "order", "sku": "A01", "qty": 2, "variant": null, "should_emit": true, "adversarial": "alias"},
+        {"buyer_id": "messy_b2", "buyer_display": "Bee", "ts": "t00002", "text": "CF เซรัม x1 ค่ะ", "order": true, "event": "order", "sku": "A01", "qty": 1, "variant": null, "should_emit": true, "adversarial": "spelling"},
+        {"buyer_id": "messy_b3", "buyer_display": "Mai", "ts": "t00003", "text": "cf กันแดด x3 คะ", "order": true, "event": "order", "sku": "A02", "qty": 3, "variant": null, "should_emit": true, "adversarial": "alias"},
+        {"buyer_id": "messy_b1", "buyer_display": "Ploy", "ts": "t00004", "text": "ราคาเท่าไหร่คะ", "order": false, "event": "chatter", "sku": null, "qty": null, "variant": null, "should_emit": false, "adversarial": null}
+      ]
+    },
+    {
+      "seller_id": "adversarial-shop",
+      "cohort": "adversarial",
+      "traffic": "hot",
+      "channel": "live",
+      "catalog": [
+        {"sku": "D01", "name": "กระเป๋า", "aliases": ["bag"], "variants": ["ดำ", "แดง"], "price": 590, "stock": 1},
+        {"sku": "D02", "name": "รองเท้า", "aliases": ["shoes"], "variants": ["37", "38"], "price": 790, "stock": 1},
+        {"sku": "OUT01", "name": "เสื้อโค้ท", "aliases": ["coat"], "variants": [], "price": 990, "stock": 0}
+      ],
+      "buyers": [
+        {"buyer_id": "adv_b1", "display_name": "Aum"},
+        {"buyer_id": "adv_b2", "display_name": "Fon"},
+        {"buyer_id": "adv_b3", "display_name": "Nan"},
+        {"buyer_id": "adv_b4", "display_name": "Beam"},
+        {"buyer_id": "adv_b5", "display_name": "Nok"}
+      ],
+      "messages": [
+        {"buyer_id": "adv_b1", "buyer_display": "Aum", "ts": "t00001", "text": "CF กระเป๋า x1 ค่ะ", "order": true, "event": "order", "sku": "D01", "qty": 1, "variant": null, "should_emit": true, "adversarial": "variant_ambig"},
+        {"buyer_id": "adv_b2", "buyer_display": "Fon", "ts": "t00002", "text": "CF CF ค่ะ", "order": true, "event": "order", "sku": null, "qty": null, "variant": null, "should_emit": false, "adversarial": "repeat_cf"},
+        {"buyer_id": "adv_b3", "buyer_display": "Nan", "ts": "t00003", "text": "CF coat x1 ค่ะ", "order": true, "event": "order", "sku": "OUT01", "qty": 1, "variant": null, "should_emit": false, "adversarial": "stockout_sub"},
+        {"buyer_id": "adv_b4", "buyer_display": "Beam", "ts": "t00004", "text": "โอนแล้วนะคะ [รูปสลิป]", "order": true, "event": "chatter", "sku": null, "qty": null, "variant": null, "should_emit": false, "adversarial": "payment_ref"},
+        {"buyer_id": "adv_b5", "buyer_display": "Nok", "ts": "t00005", "text": "CF D02 38 x1 ค่ะ", "order": true, "event": "order", "sku": "D02", "qty": 1, "variant": "38", "should_emit": true, "adversarial": null},
+        {"buyer_id": "adv_b5", "buyer_display": "Nok", "ts": "t00006", "text": "เปลี่ยนเป็น 2 ชิ้น D02 ค่ะ", "order": true, "event": "modify", "sku": "D02", "qty": 2, "variant": "38", "should_emit": true, "adversarial": "modify"},
+        {"buyer_id": "adv_b1", "buyer_display": "Aum", "ts": "t00007", "text": "CF D01 ดำ x1 ค่ะ", "order": true, "event": "order", "sku": "D01", "qty": 1, "variant": "ดำ", "should_emit": true, "adversarial": null},
+        {"buyer_id": "adv_b1", "buyer_display": "Aum", "ts": "t00008", "text": "ยกเลิก D01 ค่ะ", "order": true, "event": "cancel", "sku": "D01", "qty": null, "variant": null, "should_emit": true, "adversarial": "cancel"}
+      ]
+    }
+  ]
+}

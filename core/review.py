@@ -14,17 +14,23 @@ from typing import Dict, List, Tuple
 from core.catalog_io import rows_to_skus
 from core.eval_population import _ledger_shape
 from core.ledger_store import (
-    ACCEPTED, CORRECTED, LEDGER_STATES, NEEDS_INFO, REJECTED, LedgerStore,
+    ACCEPTED, CORRECTED, LEDGER_STATES, NEEDS_INFO, PROPOSED,
+    PROPOSED_INCOMPLETE, REJECTED, LedgerStore,
 )
 from core.orders import EventType, classify_event, parse_confirm
-from core.population import SellerWorld, resolve_sku
+from core.population import SellerWorld
+from core.resolver import resolve, variant_missing
 
 HIGH_CONFIDENCE = 0.8
 
 
 def _derive(text: str, skus) -> Tuple[str, object, object]:
     """(event_type, resolved_sku, qty) from raw text + a catalog. No ground truth."""
-    return classify_event(text), resolve_sku(text, skus), parse_confirm(text)[2]
+    return classify_event(text), resolve(text, skus), parse_confirm(text)[2]
+
+
+def _sku_obj(skus, code):
+    return next((s for s in skus if s.code == code), None)
 
 
 def populate_world(store: LedgerStore, world: SellerWorld,
@@ -55,25 +61,40 @@ def populate_world(store: LedgerStore, world: SellerWorld,
         if etype == EventType.CHATTER:
             continue
         order += 1
-        confidence = 0.9 if (sku is not None and qty is not None) else 0.35
+        # A recognized order whose SKU needs a variant the buyer didn't give is
+        # INCOMPLETE — never auto-accepted, never a hallucinated done order.
+        incomplete = (etype == EventType.ORDER and sku is not None
+                      and variant_missing(m.text, _sku_obj(skus, sku)))
+        if sku is not None and qty is not None:
+            confidence = 0.6 if incomplete else 0.9
+        else:
+            confidence = 0.35
+        status = PROPOSED_INCOMPLETE if incomplete else PROPOSED
         store.propose_event(m.id, prof.seller_id, m.id, m.sender, sku, qty,
                             variant=None, event_type=etype,
-                            confidence=confidence, dedupe_key=m.id)
+                            confidence=confidence, dedupe_key=m.id, status=status)
         proposed += 1
     return {"total": total, "order_bearing": order, "proposed": proposed,
             "duplicates": duplicates}
 
 
 def auto_review(store: LedgerStore, seller_id: str) -> Dict[str, int]:
-    """Deterministic first pass: accept confident events, flag the rest."""
+    """Deterministic first pass: accept confident events, flag the rest.
+
+    proposed_incomplete never auto-accepts — a missing required field always
+    routes to a human (needs_info), never silently into the ledger.
+    """
     accepted = flagged = 0
-    for ev in store.events(seller_id, status="proposed"):
+    for ev in store.events(seller_id, status=PROPOSED):
         if ev["confidence"] >= HIGH_CONFIDENCE:
             store.transition(ev["event_id"], ACCEPTED)
             accepted += 1
         else:
             store.transition(ev["event_id"], NEEDS_INFO)
             flagged += 1
+    for ev in store.events(seller_id, status=PROPOSED_INCOMPLETE):
+        store.transition(ev["event_id"], NEEDS_INFO)
+        flagged += 1
     return {"accepted": accepted, "needs_info": flagged}
 
 
@@ -127,6 +148,39 @@ def replay_event_values(store: LedgerStore, seller_id: str
                 buyer = c["new_value"]
         out[ev["event_id"]] = (buyer, sku, qty)
     return out
+
+
+def replay_ledger(store: LedgerStore, seller_id: str):
+    """Reconstruct the ledger from captures + corrections alone (no event values).
+
+    Re-derives each event from its raw capture and folds the correction log in
+    arrival (capture-ts) order, over events whose review status counts toward the
+    ledger. Returns (replayed_ledger, matched_snapshot?) — matched against the
+    stored after_correction snapshot when present, else the live ledger.
+    """
+    from core.orders import classify_event, reduce_ledger
+    skus = rows_to_skus(store.catalog(seller_id))
+    rows = []
+    for e in store.events(seller_id):
+        if e["status"] not in LEDGER_STATES:
+            continue
+        cap = store.get_capture(e["capture_id"])
+        etype = classify_event(cap["raw_text"])
+        buyer, sku, qty = cap["buyer_display"], resolve(cap["raw_text"], skus), \
+            parse_confirm(cap["raw_text"])[2]
+        for c in store.get_event(e["event_id"])["corrections"]:
+            if c["field"] == "sku":
+                sku = c["new_value"]
+            elif c["field"] == "qty":
+                qty = int(c["new_value"])
+            elif c["field"] == "buyer":
+                buyer = c["new_value"]
+        rows.append((cap["ts"], (etype, buyer, sku, qty)))
+    rows.sort(key=lambda r: r[0])
+    replayed = reduce_ledger(t for _ts, t in rows)
+    snap = store.get_snapshot(seller_id, "after_correction")
+    reference = snap if snap is not None else store.current_ledger(seller_id)
+    return replayed, _ledger_shape(replayed) == _ledger_shape(reference)
 
 
 def reproduction_rate(store: LedgerStore, worlds: List[SellerWorld]) -> float:

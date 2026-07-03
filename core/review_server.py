@@ -13,7 +13,7 @@ from urllib.parse import parse_qs, urlparse
 
 from core.eval_population import _ledger_shape
 from core.ledger_store import (
-    ACCEPTED, CANCELLED, LedgerStore, NEEDS_INFO, REJECTED,
+    ACCEPTED, CANCELLED, FULFILLED, LedgerStore, NEEDS_INFO, REJECTED,
 )
 
 _PAGE = """<!doctype html><meta charset=utf-8><title>ScreenGhost — Review Ledger</title>
@@ -42,11 +42,13 @@ async function load(){let sel=document.getElementById('seller').value;
 async function show(id){cur=id;let e=await j('/api/event/'+id);
  document.getElementById('detail').innerHTML=`<h3>raw capture</h3><code>${e.raw_text}</code>
  <h3>parsed</h3>buyer ${e.buyer} · sku ${e.sku} · qty ${e.qty} · ${e.event_type} · ${e.status}
- <h3>correct</h3>field <input id=f value=sku> value <input id=v> <input id=rz value=reason placeholder=reason>
+ <h3>correct</h3>field
+ <select id=f><option>sku<option>qty<option>variant<option>buyer</select>
+ value <input id=v> <input id=rz value=reason placeholder=reason>
  <button onclick=corr()>apply</button>
  <h3>decide</h3><button onclick="act('accept')">accept</button>
  <button onclick="act('reject')">reject</button><button onclick="act('needs_info')">needs_info</button>
- <button onclick="act('cancel')">cancel</button>
+ <button onclick="act('cancel')">cancel</button><button onclick="act('fulfilled')">fulfilled</button>
  <h3>corrections</h3>`+e.corrections.map(c=>`${c.field}: ${c.old_value}→${c.new_value} (${c.source})`).join('<br>')}
 async function act(a){await j('/api/action',{method:'POST',body:JSON.stringify({event_id:cur,action:a})});load()}
 async function corr(){await j('/api/action',{method:'POST',body:JSON.stringify({event_id:cur,action:'correct',
@@ -110,7 +112,8 @@ class _Handler(BaseHTTPRequestHandler):
             else:
                 self.store.transition(eid, {"accept": ACCEPTED, "reject": REJECTED,
                                             "needs_info": NEEDS_INFO,
-                                            "cancel": CANCELLED}[action])
+                                            "cancel": CANCELLED,
+                                            "fulfilled": FULFILLED}[action])
             return {"ok": True}
         except Exception as e:                       # surface, don't crash the UI
             return {"ok": False, "error": str(e)}

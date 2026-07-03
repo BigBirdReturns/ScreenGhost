@@ -1,0 +1,26 @@
+ScreenGhost — Operator Demo receipt
+NOT hardware proof. NOT business proof. Product slice on the proof spine.
+
+source: seed:pop-picks-this-live
+  seed                                    : pop-picks-this-live
+  sellers                                 : 10
+  total_messages                          : 1989
+  order_bearing_messages                  : 1469
+  proposed_events                         : 0
+  accepted_events                         : 1325
+  rejected_events                         : 144
+  corrected_events                        : 93
+  needs_info_events                       : 0
+  unicode_corruptions                     : 0
+  duplicate_events                        : 89
+  ledger_reproduction_before_correction   : 0.6
+  ledger_reproduction_after_correction    : 0.8
+  replay_matched                          : True
+  proposed_incomplete_events              : 0
+  cancelled_events                        : 0
+  fulfilled_events                        : 0
+  export_paths:
+     orders.csv      : /tmp/opseed/orders.csv
+     corrections.csv : /tmp/opseed/corrections.csv
+     captures.csv    : /tmp/opseed/captures.csv
+     receipt.txt     : /tmp/opseed/receipt.txt

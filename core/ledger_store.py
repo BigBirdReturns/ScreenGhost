@@ -19,16 +19,19 @@ from core.orders import reduce_ledger
 
 # ---- order review states + allowed transitions --------------------------- #
 PROPOSED = "proposed"
+PROPOSED_INCOMPLETE = "proposed_incomplete"   # order recognized but missing a required field
 ACCEPTED = "accepted"
 CORRECTED = "corrected"
 REJECTED = "rejected"
 NEEDS_INFO = "needs_info"
 CANCELLED = "cancelled"
 FULFILLED = "fulfilled"
-STATES = {PROPOSED, ACCEPTED, CORRECTED, REJECTED, NEEDS_INFO, CANCELLED, FULFILLED}
+STATES = {PROPOSED, PROPOSED_INCOMPLETE, ACCEPTED, CORRECTED, REJECTED,
+          NEEDS_INFO, CANCELLED, FULFILLED}
 
 _TRANSITIONS: Dict[str, set] = {
     PROPOSED: {ACCEPTED, CORRECTED, REJECTED, NEEDS_INFO, CANCELLED},
+    PROPOSED_INCOMPLETE: {CORRECTED, NEEDS_INFO, REJECTED, CANCELLED, ACCEPTED},
     NEEDS_INFO: {ACCEPTED, CORRECTED, REJECTED, CANCELLED},
     CORRECTED: {ACCEPTED, REJECTED, NEEDS_INFO, CANCELLED},
     ACCEPTED: {CORRECTED, CANCELLED, FULFILLED},
@@ -66,6 +69,9 @@ CREATE TABLE IF NOT EXISTS corrections (
     correction_id INTEGER PRIMARY KEY AUTOINCREMENT, event_id TEXT, field TEXT,
     old_value TEXT, new_value TEXT, reason TEXT, source TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE IF NOT EXISTS transitions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, event_id TEXT, from_status TEXT,
+    to_status TEXT, source TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP);
 CREATE TABLE IF NOT EXISTS ledger_snapshots (
     id INTEGER PRIMARY KEY AUTOINCREMENT, seller_id TEXT, label TEXT, body TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP);
@@ -146,13 +152,14 @@ class LedgerStore:
     def propose_event(self, event_id: str, seller_id: str, capture_id: str,
                       buyer: str, sku: Optional[str], qty: Optional[int],
                       variant: Optional[str], event_type: str,
-                      confidence: float, dedupe_key: str) -> str:
+                      confidence: float, dedupe_key: str,
+                      status: str = PROPOSED) -> str:
         self.db.execute(
             "INSERT OR IGNORE INTO order_events(event_id,seller_id,capture_id,buyer,"
             "sku,qty,variant,event_type,status,confidence,dedupe_key)"
             " VALUES (?,?,?,?,?,?,?,?,?,?,?)",
             (event_id, seller_id, capture_id, buyer, sku, qty, variant,
-             event_type, PROPOSED, confidence, dedupe_key))
+             event_type, status, confidence, dedupe_key))
         self.db.execute(
             "INSERT INTO order_event_sources(event_id,capture_id) VALUES (?,?)",
             (event_id, capture_id))
@@ -180,7 +187,7 @@ class LedgerStore:
         q += " ORDER BY created_at, event_id"
         return [dict(r) for r in self.db.execute(q, args)]
 
-    def transition(self, event_id: str, new_status: str) -> None:
+    def transition(self, event_id: str, new_status: str, source: str = "human") -> None:
         if new_status not in STATES:
             raise TransitionError(f"unknown status {new_status!r}")
         cur = self.db.execute("SELECT status FROM order_events WHERE event_id=?",
@@ -189,9 +196,18 @@ class LedgerStore:
             raise TransitionError(f"no event {event_id!r}")
         if new_status not in _TRANSITIONS[cur["status"]]:
             raise TransitionError(f"{cur['status']} -> {new_status} not allowed")
+        # append-only transition record — the current status lives on the event
+        # row; the log preserves how it got there.
+        self.db.execute(
+            "INSERT INTO transitions(event_id,from_status,to_status,source) VALUES (?,?,?,?)",
+            (event_id, cur["status"], new_status, source))
         self.db.execute("UPDATE order_events SET status=? WHERE event_id=?",
                         (new_status, event_id))
         self.db.commit()
+
+    def transitions(self, event_id: str) -> List[Dict]:
+        return [dict(r) for r in self.db.execute(
+            "SELECT * FROM transitions WHERE event_id=? ORDER BY id", (event_id,))]
 
     def correct(self, event_id: str, field: str, new_value, reason: str,
                 source: str = "human") -> int:
