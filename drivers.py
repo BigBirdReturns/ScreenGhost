@@ -116,6 +116,44 @@ class AndroidAdbDriver(DeviceDriver):
 
         return Image.open(BytesIO(proc.stdout)).convert("RGB")
 
+    def dump_ui_xml(self, device: Optional[str] = None) -> str:
+        """Exact on-screen text via the OS view tree — not pixels, no OCR.
+
+        UiAutomator dumps the live window hierarchy as XML in which every
+        visible node's ``text`` attribute is the real Unicode string the OS is
+        rendering. Complex scripts (Thai, etc.) come back exact because nothing
+        is ever recognized from an image. This is the boring, pre-vision-model
+        read path; the VLM is only a fallback for genuine pixels.
+
+        Dump-to-file then ``cat`` is used rather than ``dump /dev/tty`` because
+        the file path is the portable behavior across Android versions.
+        """
+        self._guard_local(device)
+        base = ["adb"]
+        if device:
+            base.extend(["-s", device])
+
+        remote = "/sdcard/window_dump.xml"
+        dump = subprocess.run(
+            base + ["shell", "uiautomator", "dump", remote],
+            capture_output=True, timeout=20,
+        )
+        if dump.returncode != 0:
+            raise RuntimeError(
+                f"adb uiautomator dump failed: {dump.stderr.decode('utf-8', errors='ignore')}"
+            )
+
+        cat = subprocess.run(
+            base + ["exec-out", "cat", remote], capture_output=True, timeout=10
+        )
+        if cat.returncode != 0:
+            raise RuntimeError(
+                f"adb cat {remote} failed: {cat.stderr.decode('utf-8', errors='ignore')}"
+            )
+        # UiAutomator writes UTF-8; decode leniently so a stray byte never
+        # takes down an otherwise-exact hierarchy read.
+        return cat.stdout.decode("utf-8", errors="replace")
+
     def tap(self, x: int, y: int, device: Optional[str] = None) -> None:
         self._guard_local(device)
         cmd = ["adb"]
