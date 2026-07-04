@@ -54,6 +54,22 @@ SURFACES: List[Surface] = [
             "No usable text on the scrape path (Meta strips accessibility). "
             "Route to the Page API instead; if the seller has no Page, this is "
             "an honest unsupported_surface, not a refutation of the design."),
+    # ---- legacy rungs (docs/LEGACY_SURFACE_LADDER.md) --------------------- #
+    Surface("green_screen_3270", "Mainframe green screen (3270/5250)",
+            ("view_tree",), "fixture",
+            "The terminal screen buffer is a STRUCTURED field source (TN3270 / "
+            "HLLAPI), not pixels — text with exact grid positions the user's "
+            "own session already receives. Decodes to the same Candidate "
+            "contract; grid rows make grouping exact. Live TN3270 connection + "
+            "EBCDIC decode is frozen [2b]; the buffer->contract mapping is "
+            "exercised against a fixture."),
+    Surface("physical_actuation", "No digital output (robot + webcam)",
+            ("physical", "none"), "gap",
+            "A machine with no API and no readable buffer — a robot presses "
+            "real buttons and a webcam reads the screen. FROZEN and unclaimed: "
+            "the webcam reintroduces genuine OCR error, so this rung needs a "
+            "read-back verification loop before any action is trusted. Declared "
+            "as the ladder's floor, not built."),
 ]
 
 

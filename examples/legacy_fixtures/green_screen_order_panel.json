@@ -1,0 +1,31 @@
+{
+  "fixture_id": "green_screen_order_panel",
+  "surface_type": "green_screen_3270",
+  "source_app": "cics_order_entry",
+  "screen_id": "ORDR01",
+  "grid": {"rows": 24, "cols": 80},
+  "encoding": "cp037->utf-8",
+  "_note": "Shape a TN3270 client (py3270/s3270) yields after decode: fields with grid position and a protected attribute. A live connection + EBCDIC decode against a real mainframe is FROZEN [2b], not exercised here.",
+  "fields": [
+    {"row": 1,  "col": 2,  "protected": true,  "text": "ORDER ENTRY --------------------------------------------- ORDR01"},
+    {"row": 3,  "col": 2,  "protected": true,  "text": "CUST:"},
+    {"row": 3,  "col": 10, "protected": false, "text": "NOK RATANA"},
+    {"row": 3,  "col": 40, "protected": true,  "text": "ACCT:"},
+    {"row": 3,  "col": 46, "protected": false, "text": "0042817"},
+    {"row": 5,  "col": 2,  "protected": true,  "text": "ITEM:"},
+    {"row": 5,  "col": 10, "protected": false, "text": "C01"},
+    {"row": 5,  "col": 40, "protected": true,  "text": "QTY:"},
+    {"row": 5,  "col": 46, "protected": false, "text": "0002"},
+    {"row": 7,  "col": 2,  "protected": true,  "text": "SHIP:"},
+    {"row": 7,  "col": 10, "protected": false, "text": "123 SUKHUMVIT RD"},
+    {"row": 22, "col": 2,  "protected": true,  "text": "PF1=HELP  PF3=EXIT  ENTER=SUBMIT"}
+  ],
+  "expected_candidates": [
+    {"sender": "CUST", "text": "NOK RATANA",       "payload_type": "text"},
+    {"sender": "ACCT", "text": "0042817",          "payload_type": "text"},
+    {"sender": "ITEM", "text": "C01",              "payload_type": "text"},
+    {"sender": "QTY",  "text": "0002",             "payload_type": "text"},
+    {"sender": "SHIP", "text": "123 SUKHUMVIT RD", "payload_type": "text"}
+  ],
+  "expected_order_line": {"buyer": "NOK RATANA", "text": "CF C01 x2"}
+}
