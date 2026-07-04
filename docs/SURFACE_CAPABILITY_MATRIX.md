@@ -43,6 +43,27 @@ surface is reusable on the next.
 | Mainframe green screen (3270/5250) | view_tree | fixture | The terminal buffer is a **structured field source** (TN3270/HLLAPI), not pixels — exact text with grid positions the user's session already receives. Grid rows make grouping exact. Live connection + EBCDIC decode is frozen. See [`LEGACY_SURFACE_LADDER.md`](LEGACY_SURFACE_LADDER.md). |
 | No digital output (robot + webcam) | physical → none | gap | The ladder's floor: robot presses buttons, webcam reads the screen. **Frozen, unbuilt** — the webcam is OCR and needs a read-back verification loop before any action is trusted. |
 
+## One account, many instances — this shrinks the hardware worry
+
+A surface is not a device. The same account is reachable from many *instances* at
+once: LINE arrives as a webhook **and** runs on LINE Desktop, the web client, and
+the phone; Messenger runs on a computer **and** a phone. Capture picks the
+*cheapest* instance of the user's access — and the cheapest is almost never the
+phone. The webhook lands on an ordinary server; a desktop client runs on an
+ordinary VM.
+
+So the "warehouse of 50,000 phones" image was answering a question the `api` and
+desktop paths never ask. Real device fleets remain a frozen `[2b-1]` item — but
+they are a *fallback* for surfaces with no API and no desktop instance, not the
+default. `docs/LINE_LIVE_INTEGRATION.md` is the concrete case: a live LINE
+message is received with no phone in the path at all.
+
+A note on the **output** side: serving the ledger back to the seller — or running
+a tiny on-device model — is the `vision`/presentation rung. It may touch genuine
+pixels or the last-mile UI, but it never re-enters the **text** path. Text stays
+exact (api/view_tree); a VLM is never allowed to reintroduce OCR on data the
+API already delivers byte-exact.
+
 ## The Messenger objection, answered by a decision
 
 "Try it on Messenger — they obfuscate every UI element and disable accessibility

@@ -1,0 +1,57 @@
+{
+  "_note": "Shape of a real LINE Messaging API webhook body (Messaging API reference). Used to exercise signature verification and event->candidate mapping OFFLINE. Not captured from a live send; a live send is the operator step in docs/LINE_LIVE_INTEGRATION.md.",
+  "destination": "U0mainframeoachannelxxxxxxxxxxxxx",
+  "events": [
+    {
+      "type": "message",
+      "mode": "active",
+      "timestamp": 1625665242211,
+      "source": {"type": "user", "userId": "Ubuyer0000000000000000000000nok"},
+      "webhookEventId": "01FZ74A0TDDPYRVKNK77XKC3ZR",
+      "deliveryContext": {"isRedelivery": false},
+      "replyToken": "757913772c4646b784d4b7ce46d12671",
+      "message": {"type": "text", "id": "14353798921116", "text": "CF C01 x2 ตัว ค่ะ"}
+    },
+    {
+      "type": "message",
+      "mode": "active",
+      "timestamp": 1625665243000,
+      "source": {"type": "user", "userId": "Ubuyer0000000000000000000000ann"},
+      "webhookEventId": "01FZ74A0TDDPYRVKNK77XKC4AA",
+      "deliveryContext": {"isRedelivery": false},
+      "replyToken": "757913772c4646b784d4b7ce46d12672",
+      "message": {"type": "text", "id": "14353798921117", "text": "เอาเซรั่ม 1 ขวดค่ะ"}
+    },
+    {
+      "type": "message",
+      "mode": "active",
+      "timestamp": 1625665244000,
+      "source": {"type": "user", "userId": "Ubuyer0000000000000000000000nok"},
+      "webhookEventId": "01FZ74A0TDDPYRVKNK77XKC5BB",
+      "deliveryContext": {"isRedelivery": false},
+      "replyToken": "757913772c4646b784d4b7ce46d12673",
+      "message": {"type": "sticker", "id": "14353798921118", "packageId": "446",
+                  "stickerId": "1988", "keywords": ["Love", "Thank You"]}
+    },
+    {
+      "type": "message",
+      "mode": "active",
+      "timestamp": 1625665245000,
+      "source": {"type": "user", "userId": "Ubuyer0000000000000000000000aum"},
+      "webhookEventId": "01FZ74A0TDDPYRVKNK77XKC6CC",
+      "deliveryContext": {"isRedelivery": false},
+      "replyToken": "757913772c4646b784d4b7ce46d12674",
+      "message": {"type": "image", "id": "14353798921119",
+                  "contentProvider": {"type": "line"}}
+    },
+    {
+      "type": "follow",
+      "mode": "active",
+      "timestamp": 1625665246000,
+      "source": {"type": "user", "userId": "Ubuyer0000000000000000000000new"},
+      "webhookEventId": "01FZ74A0TDDPYRVKNK77XKC7DD",
+      "deliveryContext": {"isRedelivery": false},
+      "replyToken": "757913772c4646b784d4b7ce46d12675"
+    }
+  ]
+}
