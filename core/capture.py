@@ -29,7 +29,14 @@ from typing import Dict, List, Optional
 
 from core.adapter import Candidate, classify_payload, extract, sha
 
-STRATEGIES = ("api", "view_tree", "vision", "none")
+# The capture ladder, in preference order. `api` and `view_tree` are built and
+# tested; `vision` and `physical` are DECLARED rungs, not built — a surface may
+# route to them in the registry, but capture() falls through to `none`
+# (unsupported_surface) rather than pretend a pixel/robot path exists.
+#   physical = a robot actuates real buttons and a webcam reads the screen, for
+#   a machine with no digital output at all. Frozen: it reintroduces genuine OCR
+#   error and needs a read-back verification loop (docs/LEGACY_SURFACE_LADDER.md).
+STRATEGIES = ("api", "view_tree", "vision", "physical", "none")
 
 
 @dataclass

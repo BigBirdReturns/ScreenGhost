@@ -16,7 +16,13 @@ therefore exactly the user's own access, tried in order:
 2. **view_tree** — exact on-screen text the user can read (UiAutomator), for
    surfaces with no API.
 3. **vision** — last resort, genuine pixels only (never the text path).
-4. **none** — no API *and* no readable text → `unsupported_surface`, named.
+4. **physical** — a robot presses real buttons and a webcam reads the screen,
+   for a machine with no digital output. Declared and *frozen* (see the legacy
+   ladder), because the webcam reintroduces OCR error.
+5. **none** — no path at all → `unsupported_surface`, named.
+
+The ladder reaches past phones all the way to the mainframe and the machine with
+no digital output — see [`LEGACY_SURFACE_LADDER.md`](LEGACY_SURFACE_LADDER.md).
 
 Every path emits the **same candidate contract**, so the ledger pipeline never
 knows which source a candidate came from. That is why a strategy proven on one
@@ -34,6 +40,8 @@ surface is reusable on the next.
 | Shopee / Lazada / TikTok Shop | api → view_tree | event-schema | Open-platform order/chat APIs where enrolled. |
 | Web storefront / WebView | view_tree | fixture | Exact text from the DOM/view tree; no API needed. |
 | Messenger app, accessibility stripped | none | gap | No API path AND no readable text → `unsupported_surface`. Route to the Page API; if the seller has no Page, this is an honest gap, not a refutation. |
+| Mainframe green screen (3270/5250) | view_tree | fixture | The terminal buffer is a **structured field source** (TN3270/HLLAPI), not pixels — exact text with grid positions the user's session already receives. Grid rows make grouping exact. Live connection + EBCDIC decode is frozen. See [`LEGACY_SURFACE_LADDER.md`](LEGACY_SURFACE_LADDER.md). |
+| No digital output (robot + webcam) | physical → none | gap | The ladder's floor: robot presses buttons, webcam reads the screen. **Frozen, unbuilt** — the webcam is OCR and needs a read-back verification loop before any action is trusted. |
 
 ## The Messenger objection, answered by a decision
 
@@ -52,9 +60,10 @@ obfuscation is bypassed because you never open the app. The objection routes to
   the single candidate contract across sources, and the named
   `unsupported_surface` verdict.
 - **Frozen ([2b]/[3], not claimed):** live platform API integration (real
-  LINE/Meta/marketplace connections), and the fleet economics of managed
-  devices. `api` rows are a *decided strategy + event schema*, exercised against
-  representative payloads — not a live connection.
+  LINE/Meta/marketplace connections), a live TN3270 connection + EBCDIC decode,
+  the physical(robot+webcam) rung, and the fleet economics of managed devices.
+  `api` and green-screen rows are a *decided strategy + contract*, exercised
+  against representative payloads/fixtures — not a live connection.
 
 See [`CLAIM_BOUNDARIES.md`](CLAIM_BOUNDARIES.md) and
 [`ADAPTER_CONFORMANCE.md`](ADAPTER_CONFORMANCE.md).
