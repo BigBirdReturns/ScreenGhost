@@ -140,6 +140,16 @@ def stockout():
     return "line_like", "PASS", None, ["order_text_candidate"], ["image_payload"], [snap(rows)]
 
 
+def messenger_obfuscated():
+    # Meta strips accessibility on the app scrape path: the dump has nodes but no
+    # readable text and no meaningful content-desc -> no candidates. The routed
+    # answer is the Page API (see core/surfaces.py), not this scrape.
+    rows = [{"icon_only": True}, {"icon_only": True}, {"icon_only": True},
+            {"icon_only": True}]
+    return ("messenger_app", "EXPECTED_FAIL", "no_text_exposed",
+            ["no_positive"], ["accessibility_stripped"], [snap(rows)])
+
+
 FIXTURES = {
     "line_like_basic": line_basic, "line_like_emoji": line_emoji,
     "line_like_sticker": line_sticker, "line_like_payment_screenshot": line_payment,
@@ -149,6 +159,7 @@ FIXTURES = {
     "missing_text_nodes": missing_text, "webview_flat_text": webview_flat,
     "address_fragments": address_fragments, "variant_ambiguity": variant_ambiguity,
     "stockout_substitution": stockout,
+    "messenger_app_obfuscated": messenger_obfuscated,
 }
 
 

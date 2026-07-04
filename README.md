@@ -338,6 +338,21 @@ today is pipeline integrity `[1]` and rendered view-tree parity `[2a]`; real
 hardware `[2b-1]`, real apps `[2b-2]`, and seller-hour business lift `[3]` are
 deliberately **frozen and not claimed**.
 
+### The ghost inherits the user's system
+
+ScreenGhost runs on the user's own device and account, so its capture options
+are the user's own access, tried in order: **api** (official platform events the
+user's session already receives) → **view_tree** (exact on-screen text) →
+**vision** (last resort) → **unsupported_surface** (named). Every path emits the
+same candidate contract, so a strategy proven on one surface is reusable on the
+next. This is how "try it on Messenger — they obfuscate everything" gets
+answered by a *decision*: a seller with a Page receives messages via the
+Messenger Platform webhook, so the app's obfuscation is bypassed, not fought;
+the scrape path fails by name (`no_text_exposed`). Decided paths per platform:
+[`docs/SURFACE_CAPABILITY_MATRIX.md`](docs/SURFACE_CAPABILITY_MATRIX.md)
+(`python examples/capture_matrix.py`). Live platform API integration is a frozen
+`[2b]` item — the routing and contract are proven, the live connections are not.
+
 ### App-surface differences are adapter tickets, not verdicts
 
 ScreenGhost does not require every app to look identical. It requires every app
