@@ -35,23 +35,21 @@ from typing import Any, Dict, Optional
 # ---------------------------------------------------------------------------
 # Hashing / stable content-addressed IDs — mirror of ghostbox/interop/contracts.py.
 # Kept byte-for-byte compatible on purpose; pinned by the conformance test.
+#
+# The algorithm is pinned to SHA-256 as a fixed contract constant. It must NOT be
+# an environment-dependent choice: an optional blake3 backend would make the same
+# EvidenceEvent produce evt:b3:... where blake3 is installed and evt:sha256:...
+# where it is not, breaking the cross-repo promise that one observation yields
+# one event_id everywhere. This mirrors the same pin on the GhostBox side.
 # ---------------------------------------------------------------------------
 
-try:
-    import blake3 as _blake3  # type: ignore
+import hashlib
 
-    _HASH_TAG = "b3"
+_HASH_TAG = "sha256"
 
-    def _digest(data: bytes) -> str:
-        return _blake3.blake3(data).hexdigest()
 
-except ImportError:  # pragma: no cover - fallback path
-    import hashlib
-
-    _HASH_TAG = "sha256"
-
-    def _digest(data: bytes) -> str:
-        return hashlib.sha256(data).hexdigest()
+def _digest(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
 
 
 def _json_default(value: Any) -> Any:

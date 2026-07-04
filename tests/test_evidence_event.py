@@ -46,10 +46,11 @@ _GOLDEN_CANONICAL = (
     b'"raw_ref":"log/screenshots/0001.png","source":"screen_ghost",'
     b'"surface":"screen"}'
 )
-# Full event_id under the SHA-256 fallback path (no blake3 installed).
+# Full event_id. SHA-256 is pinned as a fixed contract constant, so this is the
+# id in every environment (there is no optional-backend variance to branch on).
 _GOLDEN_ID_SHA256 = "evt:sha256:c34679d7fefa95b85ce187ef5fa9ec6f"
 
-_ID_RE = re.compile(r"^evt:(b3|sha256):[0-9a-f]{32}$")
+_ID_RE = re.compile(r"^evt:sha256:[0-9a-f]{32}$")
 
 
 def _identity(args):
@@ -76,13 +77,18 @@ def test_event_id_is_tagged_digest_of_canonical_bytes():
     assert _ID_RE.match(ev.event_id)
 
 
-def test_matches_contract_golden_on_sha256_path():
+def test_algorithm_is_pinned_to_sha256_no_optional_variance():
+    # The pin is the whole point of P1: no environment-dependent backend. If this
+    # regresses to an optional blake3 import, the same observation would hash
+    # differently across machines and cross-repo correlation would silently break.
+    assert _HASH_TAG == "sha256"
+
+
+def test_matches_contract_golden():
+    # Unconditional now: the same value the GhostBox contract emits, in every
+    # environment, because both sides pin SHA-256.
     ev = EvidenceEvent(**_GOLDEN_ARGS)
-    if _HASH_TAG == "sha256":
-        # Same value the GhostBox contract emits in this (no-blake3) environment.
-        assert ev.event_id == _GOLDEN_ID_SHA256
-    else:  # blake3 present: agreement is still guaranteed by the two rules above
-        assert ev.event_id.startswith("evt:b3:")
+    assert ev.event_id == _GOLDEN_ID_SHA256
 
 
 def test_content_addressing_is_deterministic():
