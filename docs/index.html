@@ -131,7 +131,6 @@
       <a href="#what">What it does</a>
       <a href="#proven">Proven</a>
       <a href="#boundaries">Not claimed</a>
-      <a href="#open">Left to object</a>
       <a href="#adapters">Adapters</a>
       <a href="#run">Run it</a>
       <a href="https://github.com/BigBirdReturns/ScreenGhost">GitHub</a>
@@ -273,10 +272,46 @@
 <!-- ============================ NOT CLAIMED ============================ -->
 <section id="boundaries">
   <div class="wrap">
-    <div class="kicker">What is not claimed</div>
-    <h2>Frozen categories stay frozen</h2>
-    <div class="bound">
-      <strong>ScreenGhost v0.1 does not claim:</strong>
+    <div class="kicker">Claim boundaries, not arenas</div>
+    <h2>What this release does not claim</h2>
+
+    <p>ScreenGhost v0.1 is not a claim that we have already operated a live seller
+      network, proven seller-hour savings, or matched the production history of
+      established social-commerce platforms. Page365-class systems have already
+      demonstrated that real Thai sellers can be supported in production through
+      conventional platform workflows. This release does not borrow that trust.</p>
+
+    <p>It also does not treat those categories as a dare. They are claim boundaries,
+      not arenas. ScreenGhost v0.1 proves a narrower object: a local evidence kernel
+      that turns screen-derived seller activity into capture candidates, proposed order
+      events, human corrections, exports, replayable receipts, and adapter conformance
+      fixtures.</p>
+
+    <p>The differentiator is not "we also have a shop-management platform." The
+      differentiator is that ScreenGhost is built for surfaces the platform model does
+      not naturally own. It does not begin by asking the seller to migrate the work into
+      a dashboard. It begins with the work where it already appears, then asks whether
+      that surface can satisfy a candidate contract: exact text, bounded rows, payload
+      classification, dedupe, and replayable evidence.</p>
+
+    <p>If a surface exposes usable text and structure, the remaining work is an adapter
+      ticket. If it withholds text entirely, the failure is explicit:
+      <span class="mono">no_text_exposed</span>. If the parser misses seller language,
+      that is a resolver ticket. If the review flow is awkward, that is a product issue.
+      None of those is a universal impossibility verdict.</p>
+
+    <div class="bound" style="border-left-color:var(--accent)">
+      <p style="margin:0;color:var(--ink);font-size:1.14rem">
+        <strong>The only genuinely open product proof is seller outcome.</strong></p>
+      <p class="small" style="margin:8px 0 0">
+        Whether real sellers save time, recover orders, and trust the ledger over
+        sustained use. ScreenGhost v0.1 does not claim that. It ships the kernel that
+        would let that claim be tested — without pretending the claim has already been
+        earned.</p>
+    </div>
+
+    <div class="bound" style="margin-top:14px">
+      <strong>In precise terms, v0.1 does not claim:</strong>
       <ul>
         <li>no hardware proof — nothing has run on a physical device</li>
         <li>no live-seller proof — no real seller, account, or app session</li>
@@ -290,58 +325,10 @@
         Overclaiming is treated as a bug.
       </p>
     </div>
-  </div>
-</section>
 
-<!-- ============================ LEFT TO OBJECT ============================ -->
-<section id="open">
-  <div class="wrap">
-    <div class="kicker">What's left to object to</div>
-    <h2>The honest attack surface</h2>
-    <p>The original objection was a single word — <em>impossible</em>. That word is gone,
-      because the hard parts are tested and reproducible by anyone who clones the repo. What
-      remains is not a rebuttal; it's a build list. Here is exactly where a critic can still
-      land a hit — and where they can't.</p>
-
-    <h3 style="margin-top:26px">Closed — don't swing here</h3>
-    <div class="routes">
-      <div class="route"><b>Thai text accuracy</b><div class="small muted">No OCR on the text path — exact Unicode bytes from the view tree or the platform API. <span class="mono">CF C01 x2 ตัว ค่ะ</span> stays exact.</div></div>
-      <div class="route"><b>Messenger obfuscation</b><div class="small muted">The seller's Page webhook is inherited, so the app is never opened. The scrape path fails <em>by name</em> (<span class="mono">no_text_exposed</span>); the routed answer is the API.</div></div>
-      <div class="route"><b>"The real app is different"</b><div class="small muted">Any surface either passes the candidate contract or files exactly one named adapter cause. Difference is a test, not a debate.</div></div>
-    </div>
-
-    <h3 style="margin-top:26px">Open — swing here (every one is a build, not a rebuttal)</h3>
-    <div class="cards">
-      <div class="card">
-        <h3><span class="st ni">frozen · 2b-1</span></h3>
-        <p><strong>Real hardware.</strong> Everything runs on synthetic dumps and rendered
-          view-trees. No fleet of managed devices, no uptime figure, no IP-block survival, no
-          per-device cost on real tin. The scale number is a narrative, not a receipt.</p>
-      </div>
-      <div class="card">
-        <h3><span class="st ni">frozen · 2b-2</span></h3>
-        <p><strong>Live platform APIs.</strong> The <span class="mono">api</span> rows are a
-          decided strategy + event schema against representative payloads — not a live
-          LINE / Meta / marketplace connection. Real webhooks drift, rate-limit, and rotate
-          auth. Until one is plugged in, this is design, not proof.</p>
-      </div>
-      <div class="card">
-        <h3><span class="st ni">frozen · 3</span></h3>
-        <p><strong>Business / seller-hours.</strong> Does a seller mid-live review and correct
-          the ledger faster than they'd just type? The review UI and correction model exist;
-          a seller's stopwatch does not.</p>
-      </div>
-      <div class="card">
-        <h3><span class="st pro">honest gap</span></h3>
-        <p><strong>Coverage tail.</strong> A seller with <em>no</em> Page, on an app with no
-          API <em>and</em> no readable text, is genuinely unsupported — routed to
-          <span class="mono">unsupported_surface</span>, named, not hidden.</p>
-      </div>
-    </div>
-
-    <p class="small muted" style="margin-top:18px">
-      A fifth objection that isn't hardware, a live connection, or seller-hours files as a
-      ticket, not a mic drop — see the five routes below. Surface routing in full:
+    <p class="small muted" style="margin-top:14px">
+      How each surface is routed — api → view_tree → vision → unsupported, with the
+      legacy ladder — is in
       <a href="https://github.com/BigBirdReturns/ScreenGhost/blob/main/docs/SURFACE_CAPABILITY_MATRIX.md">docs/SURFACE_CAPABILITY_MATRIX.md</a>.
     </p>
   </div>
