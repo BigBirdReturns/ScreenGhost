@@ -1,0 +1,21 @@
+<!doctype html>
+<!-- Drift fixture: identical dashboard, but the tile's click handler is dead --
+     the visible state never transitions. The runner must record
+     verification_failed and stop, never retry or improvise. -->
+<meta charset="utf-8">
+<title>Home Dashboard</title>
+<style>
+  body { margin: 0; font-family: monospace; background: #ffffff; }
+  h1   { position: absolute; left: 40px; top: 20px; margin: 0; font-size: 24px; }
+  .tile {
+    position: absolute; left: 40px; top: 120px; width: 220px; height: 100px;
+    border: 2px solid #333; background: #eeeeee; cursor: pointer;
+  }
+  .tile .label { display: block; padding: 8px 8px 0 8px; font-size: 16px; }
+  .tile .state { display: block; padding: 8px; font-size: 22px; font-weight: bold; }
+</style>
+<h1 id="dashboard-title">Home Dashboard</h1>
+<div class="tile" id="tile-living-room-lamp">
+  <span class="label" id="lamp-label">Living Room Lamp</span>
+  <span class="state" id="lamp-state">Off</span>
+</div>
