@@ -179,7 +179,7 @@ Surface Teacher v0 does not:
 Run the executable gate directly:
 
 ```text
-python -m pytest tests/test_surface_teacher.py -q
+python -m pytest tests/surface_teacher -q
 ```
 
 The gate covers parser honesty, Unicode, repeated Android resource IDs, deterministic
