@@ -187,9 +187,15 @@ def test_browser_capture_refuses_a_pixel_dom_race_without_clicking():
 
 def test_teacher_modules_have_no_process_or_input_transport_imports():
     import core.surface_teacher as teacher
+    import core.teacher_android as android
+    import core.teacher_source_contract as contract
     import core.teacher_sources as sources
+    import core.teacher_web as web
 
-    source = inspect.getsource(teacher) + inspect.getsource(sources)
+    source = "".join(
+        inspect.getsource(module)
+        for module in (teacher, contract, android, web, sources)
+    )
     assert "import subprocess" not in source
     assert "from drivers" not in source
     assert "FastAPI" not in source
