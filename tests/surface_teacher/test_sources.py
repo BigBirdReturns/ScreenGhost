@@ -43,6 +43,26 @@ def test_uiautomator_repeated_resource_ids_receive_unique_teacher_locators():
     assert len(refs) == 2 and len(set(refs)) == 2
 
 
+def test_uiautomator_names_clickable_preference_row_from_title_descendant():
+    xml = """<hierarchy><node class="android.widget.FrameLayout" bounds="[0,0][400,800]">
+      <node resource-id="app:id/tile" class="android.widget.LinearLayout"
+            clickable="true" focusable="true" bounds="[0,100][400,220]">
+        <node resource-id="app:id/icon" class="android.widget.ImageView"
+              bounds="[20,120][60,160]" />
+        <node resource-id="android:id/title" class="android.widget.TextView"
+              text="Display" bounds="[80,120][180,160]" />
+        <node resource-id="android:id/summary" class="android.widget.TextView"
+              text="Wallpaper, sleep, font size" bounds="[80,160][300,200]" />
+      </node>
+    </node></hierarchy>"""
+    parsed = parse_uiautomator_xml(xml, viewport=(400, 800))
+    tile = next(node for node in parsed if node.source_ref.startswith("app:id/tile@"))
+    assert tile.interactive is True
+    assert tile.role == "menu_item"
+    assert tile.label == "Display"
+    assert tile.label_source == "descendant:title"
+
+
 def test_uiautomator_refuses_unbounded_interactive_node():
     bad = ANDROID_XML.replace('bounds="[40,180][360,250]"', 'bounds=""', 1)
     with pytest.raises(SourceParseError, match="interactive UI Automator node"):

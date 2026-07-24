@@ -1,0 +1,6 @@
+# Core emulator, receipts, and tests. ScreenGhost already carries Pillow/Numpy.
+Pillow>=10
+numpy>=1.26
+psutil>=5.9
+pytest>=8
+playwright>=1.45

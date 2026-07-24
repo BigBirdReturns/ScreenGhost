@@ -1,0 +1,27 @@
+{
+  "schema": "semantic_multibox_machine_plan_v1",
+  "vendor": "memu",
+  "executable": "C:\\Program Files\\Microvirt\\MEmu\\memuc.exe",
+  "app_family": "example_app",
+  "macro_path": "C:\\ScreenGhost\\macros\\example_flow.txt",
+  "macro_format": "ldplayer",
+  "leader": {"name": "SG Leader"},
+  "visual_teacher_instances": [
+    {"name": "SG Visual Teacher 320"}
+  ],
+  "baseline_instances": [
+    {"name": "SG Baseline 1"},
+    {"name": "SG Baseline 2"}
+  ],
+  "semantic_instances": [
+    {"name": "SG Semantic 1"},
+    {"name": "SG Semantic 2"}
+  ],
+  "text_values": {},
+  "start_instances": false,
+  "notes": [
+    "All six instances must begin from independently cloned identical app state.",
+    "The optional visual teacher is prepared at the geometry being tested and is used only before runtime.",
+    "Do not reuse a visual teacher or baseline clone for semantic replay."
+  ]
+}

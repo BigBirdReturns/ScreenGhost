@@ -1,0 +1,11 @@
+{
+  "schema": "screenghost_androidworld_smoke_config_v1",
+  "avd_name": "AndroidWorldAvd",
+  "hardware_profile": "Pixel 6",
+  "api_level": 33,
+  "emulator_args": ["-no-snapshot", "-grpc", "8554"],
+  "console_port": 5554,
+  "perform_emulator_setup": false,
+  "input_actions": 0,
+  "purpose": "final read-only transport and temporal-alignment smoke"
+}

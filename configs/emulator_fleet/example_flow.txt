@@ -1,0 +1,8 @@
+# Replace these points with a harmless demonstration from your test application.
+size 360 720
+touch 180 156
+wait 700
+touch 180 165
+wait 700
+touch 272 640
+wait 700

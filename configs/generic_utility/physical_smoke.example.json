@@ -1,0 +1,9 @@
+{
+  "schema": "screenghost_physical_smoke_config_v1",
+  "device": "REPLACE_WITH_ADB_SERIAL",
+  "surface_id": "physical.current",
+  "burst_count": 3,
+  "input_actions": 0,
+  "network_adb_allowed": false,
+  "purpose": "final read-only capture smoke after emulated conclusion"
+}

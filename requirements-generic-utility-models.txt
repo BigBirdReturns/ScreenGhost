@@ -1,0 +1,6 @@
+# Optional measured local-grounder path.
+torch>=2.4
+transformers>=4.48
+accelerate>=1.0
+qwen-vl-utils>=0.0.8
+safetensors>=0.4

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import re
 import xml.etree.ElementTree as ET
+from dataclasses import replace
 from typing import Any, List, Optional, Protocol, Tuple, runtime_checkable
 
 from core.surface_teacher import (
@@ -158,7 +159,65 @@ def parse_uiautomator_xml(
         raise SourceParseError(
             "UI Automator hierarchy exposed no visible bounded nodes"
         )
-    return tuple(nodes)
+
+    # UI Automator commonly exposes a clickable Android preference row as an
+    # unlabeled layout whose visible title lives on a non-clickable TextView
+    # descendant.  That title is the row's accessible name for semantic replay,
+    # even though the raw dump does not copy it onto the clickable ancestor.
+    # Prefer Android's conventional ``id/title`` descendant and otherwise use
+    # the first visible labeled descendant in tree order.
+    by_ref = {node.source_ref: node for node in nodes}
+
+    def is_descendant(candidate: TeacherNode, ancestor_ref: str) -> bool:
+        parent_ref = candidate.parent_ref
+        seen = set()
+        while parent_ref and parent_ref not in seen:
+            if parent_ref == ancestor_ref:
+                return True
+            seen.add(parent_ref)
+            parent = by_ref.get(parent_ref)
+            parent_ref = parent.parent_ref if parent is not None else None
+        return False
+
+    enriched: List[TeacherNode] = []
+    for node in nodes:
+        structural_click_target = (
+            node.interactive
+            and not node.label
+            and node.role in {"group", "control"}
+        )
+        if not structural_click_target:
+            enriched.append(node)
+            continue
+        labeled_descendants = [
+            candidate
+            for candidate in nodes
+            if candidate.label
+            and not candidate.sensitive
+            and is_descendant(candidate, node.source_ref)
+        ]
+        if not labeled_descendants:
+            enriched.append(node)
+            continue
+        title_descendants = [
+            candidate
+            for candidate in labeled_descendants
+            if candidate.source_ref.split("@", 1)[0].endswith(("id/title", ":title"))
+        ]
+        label_node = (title_descendants or labeled_descendants)[0]
+        enriched.append(
+            replace(
+                node,
+                role="menu_item",
+                label=label_node.label,
+                label_source=(
+                    "descendant:title"
+                    if title_descendants
+                    else "descendant:visible-label"
+                ),
+            )
+        )
+    return tuple(enriched)
 
 
 @runtime_checkable
