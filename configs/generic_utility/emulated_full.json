@@ -1,0 +1,31 @@
+{
+  "schema": "screenghost_generic_utility_config_v1",
+  "backend": "phoneworld",
+  "seed": 19,
+  "teach_tasks": [
+    "settings_dark_mode",
+    "profile_display_name",
+    "timer_start_stop"
+  ],
+  "warm_tasks": [
+    "settings_dark_mode",
+    "profile_display_name",
+    "timer_start_stop"
+  ],
+  "holdout_task": "holdout_connectivity",
+  "minimum_visual_confidence": 0.9,
+  "minimum_visual_margin": 0.05,
+  "required_gates": [
+    "warm_task_zero_teacher_and_large_vlm",
+    "warm_gpu_reduction_at_least_50_percent",
+    "heldout_generic_phone_grammar_action",
+    "zero_confident_unknown_or_lookalike_false_matches",
+    "zero_duplicate_actions",
+    "zero_pending_overlaps",
+    "visible_postcondition_and_controller_receipt",
+    "zero_host_foreground_focus_changes",
+    "dynamic_content_preserves_screen_family",
+    "model_timeout_aborts_before_motor",
+    "zero_privileged_runtime_action_dependencies"
+  ]
+}

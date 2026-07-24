@@ -1,0 +1,40 @@
+{
+  "animated_surface_certificate_id": "align_a9bc6d046fcad091926abd9712489aa073c1caeb6fbd1419a48988407a92596f",
+  "animated_surface_dynamic_fraction": 0.00399402,
+  "animated_surface_pass": true,
+  "animated_surface_static_mean_difference": 0.0,
+  "browser": "system chromium through Playwright",
+  "browser_version": "144.0.7559.96",
+  "capture_clock_values": [
+    "1",
+    "3",
+    "6"
+  ],
+  "css_viewport": [
+    240,
+    160
+  ],
+  "device_bounds": [
+    0,
+    0,
+    480,
+    320
+  ],
+  "dpr": 2,
+  "dpr_geometry_pass": true,
+  "input_actions": 0,
+  "network_used": false,
+  "normalized_bounds": [
+    0.0,
+    0.0,
+    1.0,
+    1.0
+  ],
+  "page_network_requests": [],
+  "playwright_version": "1.57.0",
+  "schema": "surface_teacher_real_playwright_receipt_v1",
+  "screenshot_pixels": [
+    480,
+    320
+  ]
+}

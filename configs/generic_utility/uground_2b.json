@@ -1,0 +1,12 @@
+{
+  "schema": "screenghost_local_grounder_config_v1",
+  "provider": "huggingface_attached_jsonl",
+  "model": "osunlp/UGround-V1-2B",
+  "dtype": "float16",
+  "quantization": null,
+  "max_new_tokens": 96,
+  "startup_timeout_ms": 180000,
+  "request_timeout_ms": 30000,
+  "listener": false,
+  "motor_authority": false
+}

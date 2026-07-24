@@ -1,0 +1,16 @@
+{
+  "schema": "semantic_multibox_machine_plan_v1",
+  "vendor": "ldplayer",
+  "executable": "C:\\LDPlayer\\LDPlayer9\\dnconsole.exe",
+  "app_family": "example_app",
+  "macro_path": "C:\\ScreenGhost\\macros\\example_flow.txt",
+  "macro_format": "ldplayer",
+  "leader": {"index": 0},
+  "baseline_instances": [{"index": 1}],
+  "semantic_instances": [{"index": 2}],
+  "text_values": {},
+  "start_instances": false,
+  "notes": [
+    "Indices must resolve to disjoint clones at the same initial app state."
+  ]
+}

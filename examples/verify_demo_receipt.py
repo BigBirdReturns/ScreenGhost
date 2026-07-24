@@ -53,16 +53,19 @@ def main() -> None:
     sellers = int(saved.get("sellers", "10"))
     mismatches = []
     with tempfile.TemporaryDirectory() as tmp:
-        receipt, paths, _rp, _store, _worlds = run(seed, sellers, tmp)
-        for k in _COMPARED:
-            if k in saved and str(receipt.get(k)) != saved[k]:
-                mismatches.append(f"{k}: saved={saved[k]} rerun={receipt.get(k)}")
-        # check exports while the tempdir still exists
-        for kind, p in paths.items():
-            if not os.path.exists(p):
-                mismatches.append(f"missing export {kind}")
-        if str(receipt.get("replay_matched")) != "True":
-            mismatches.append("replay did not match on rerun")
+        receipt, paths, _rp, store, _worlds = run(seed, sellers, tmp)
+        try:
+            for k in _COMPARED:
+                if k in saved and str(receipt.get(k)) != saved[k]:
+                    mismatches.append(f"{k}: saved={saved[k]} rerun={receipt.get(k)}")
+            # check exports while the tempdir still exists
+            for kind, p in paths.items():
+                if not os.path.exists(p):
+                    mismatches.append(f"missing export {kind}")
+            if str(receipt.get("replay_matched")) != "True":
+                mismatches.append("replay did not match on rerun")
+        finally:
+            store.close()
 
     if mismatches:
         print("MISMATCH:")
