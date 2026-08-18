@@ -1,20 +1,17 @@
 """Official-client Windows eyes and hands for the DTI cartridge.
 
-Capture uses DXcam against the visible Roblox window.  Input uses ordinary Win32
-SendInput events.  The driver refuses to act unless the declared Roblox window is
+Capture uses DXcam against the visible Roblox window. Input uses ordinary Win32
+SendInput events. The driver refuses to act unless the declared Roblox window is
 foreground, its process name is allowlisted, its client geometry is within the
-declared tolerance, and the emergency-stop key is not held.  It contains no
-process-memory, injection, client-modification, or anti-cheat bypass path.
+declared tolerance, the client lies completely on DXcam's primary output, and the
+emergency-stop key is not held. It contains no process-memory, injection,
+client-modification, or anti-cheat bypass path.
 """
 from __future__ import annotations
 
-import ctypes
-import platform
 import re
-import sys
-import time
 from dataclasses import dataclass, field
-from typing import Any, Callable, Optional, Sequence, Tuple
+from typing import Optional, Tuple
 
 
 class WindowsDriverError(RuntimeError):
@@ -43,6 +40,7 @@ class WindowTarget:
     expected_client_size: Optional[Tuple[int, int]] = (1600, 900)
     size_tolerance_px: int = 8
     require_foreground: bool = True
+    require_primary_output: bool = True
 
     def __post_init__(self) -> None:
         re.compile(self.title_pattern)
@@ -64,6 +62,7 @@ class DriverDoctor:
     process_allowed: bool
     client_size: Optional[Tuple[int, int]]
     geometry_allowed: bool
+    capture_output_allowed: bool
     emergency_stop_active: bool
     reasons: Tuple[str, ...] = field(default_factory=tuple)
 
@@ -76,7 +75,6 @@ class DriverDoctor:
             and self.target_foreground
             and self.process_allowed
             and self.geometry_allowed
+            and self.capture_output_allowed
             and not self.emergency_stop_active
         )
-
-

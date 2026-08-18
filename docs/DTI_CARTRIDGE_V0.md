@@ -69,10 +69,11 @@ Community theme databases can be imported into the same schema. Their churn does
 2. F12 is not held.
 3. one visible window matches the declared Roblox title pattern;
 4. that window is foreground;
-5. its process name is in the official-client allowlist; and
-6. its client dimensions match the enrolled profile within tolerance.
+5. its process name is in the official-client allowlist;
+6. its client dimensions match the enrolled profile within tolerance; and
+7. the full client rectangle lies on DXcam's admitted primary display output.
 
-The driver does not activate a background window or silently redirect input. Focus drift is a refusal.
+The driver does not activate a background window or silently redirect input. Focus drift is a refusal. The v0 DXcam adapter also requires the entire Roblox client area to remain on the Windows primary display, which prevents virtual-screen coordinates from being misapplied to another capture output.
 
 ### Transaction contract
 
@@ -89,16 +90,32 @@ The v0 package carries deterministic tests for:
 - Freeplay, public co-pilot, emulator, modified-client, voting, and unsafe-key policy decisions;
 - phase classification, unknown-screen halt, and illegal-transition recovery;
 - single-flight action settlement, duplicate idempotency, pending-overlap refusal, and policy-block receipts;
-- profile validation and Windows import safety; and
-- end-to-end visible theme interpretation into a local-atlas outfit plan.
+- profile validation and Windows import safety;
+- end-to-end visible theme interpretation into a local-atlas outfit plan;
+- policy distinction between automated `give_stars` and legitimate star-themed clothing; and
+- primary-output custody configuration for the Windows capture path.
+
+The permanent workflow runs the cartridge on Ubuntu and Windows across Python 3.11 and 3.13. The current local floor is 28 deterministic tests, successful bytecode compilation, a content-addressed example-profile validation, and an OCR-degraded theme resolution fixture.
 
 ## First physical campaign
 
-Run this from the branch that contains PR #13 and this cartridge:
+The streamlined Windows path is:
 
 ```powershell
-py -3.13 -m venv .venv-dti
-.\.venv-dti\Scripts\Activate.ps1
+# Fresh checkout, after launching the official Roblox client and entering DTI Freeplay:
+.\PREFLIGHT_DTI.cmd -Bootstrap
+
+# Later runs:
+.\PREFLIGHT_DRI.cmd
+```
+
+`PREFLIGHT_DTI.cmd` writes a timestamped `doctor.json`, `capture.json`, `freeplay-entry.png`, and content hash under `artifacts\dti\evidence`. It proves the live eyes and target-window custody only.
+
+The equivalent manual setup, from the branch that contains PR #13 and this cartridge, is:
+
+```powershell
+py -3.13 -m venv artifacts\dti\venv
+.\artifacts\dti\venv\Scripts\Activate.ps1
 python -m pip install -r requirements-generic-utility.txt
 python -m pip install -r requirements-dti.txt
 
@@ -111,7 +128,7 @@ Launch Dress to Impress through the official Windows Roblox client, enter Freepl
 python -m experiments.dti doctor configs/dti/profile.example.json
 python -m experiments.dti capture `
   configs/dti/profile.example.json `
-  evidence/dti/freeplay-entry.png
+  artifacts/dti/evidence/freeplay-entry.png
 ```
 
 A passing doctor and captured client image prove the live eyes and target-window custody. They do not yet prove a round.

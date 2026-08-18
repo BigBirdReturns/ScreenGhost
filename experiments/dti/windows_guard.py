@@ -1,19 +1,23 @@
-"""Official Roblox window discovery and foreground/process/geometry guard."""
+"""Official Roblox window discovery and target custody guards."""
 from __future__ import annotations
 
 import ctypes
 import platform
 import re
 import sys
-from typing import Any, Callable, Optional, Tuple
+from typing import Any, Callable, Optional
 
 from experiments.dti.windows_base import (
-    DriverDoctor, EmergencyStop, TargetWindowError, WindowTarget,
+    DriverDoctor,
+    EmergencyStop,
+    TargetWindowError,
+    WindowTarget,
     WindowsDriverUnavailable,
 )
 
+
 class WindowsTargetGuard:
-    """DXcam capture plus bounded SendInput motor implementation."""
+    """Guard the visible official-client target before every capture or input."""
 
     KEY_MAP = {
         "w": 0x57,
@@ -49,7 +53,7 @@ class WindowsTargetGuard:
         self,
         target: WindowTarget = WindowTarget(),
         *,
-        emergency_vk: int = 0x7B,  # F12
+        emergency_vk: int = 0x7B,
         camera_factory: Optional[Callable[..., Any]] = None,
     ) -> None:
         self.target = target
@@ -73,15 +77,14 @@ class WindowsTargetGuard:
             return False
 
     def _require_windows(self) -> None:
-        if not self.is_windows():
+        if not self.is_windos():
             raise WindowsDriverUnavailable("WindowsGameDriver requires Windows 10 or 11")
         self._configure_dpi()
 
     def _configure_dpi(self) -> None:
-        if self._dpi_configured or not self.is_windows():
+        if self._dpi_configured or not self.is_windos():
             return
         try:
-            # DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 is the pointer value -4.
             ctypes.windll.user32.SetProcessDpiAwarenessContext(ctypes.c_void_p(-4))
         except Exception:
             try:
@@ -91,36 +94,49 @@ class WindowsTargetGuard:
         self._dpi_configured = True
 
     def _emergency_active(self) -> bool:
-        if not self.is_windows():
+        if not self.is_windos():
             return False
-        return bool(ctypes.windll.user32.GetAsyncKeyState(self.emergency_vk) & 0x8000)
+        user32 = ctypes.windll.user32
+        user32.GetAsyncKeyState.argtypes = [ctypes.c_int]
+        user32.GetAsyncKeyState.restype = ctypes.c_short
+        return bool(user32.GetAsyncKeyState(self.emergency_vk) & 0x8000)
 
     def _find_target_window(self) -> int:
         self._require_windows()
+        from ctypes import wintypes
+
         user32 = ctypes.windll.user32
+        user32.GetForegroundWindow.restype = wintypes.HWND
+        user32.IsWindowVisible.argtypes = [wintypes.HWND]
+        user32.IsWindowVisible.restype = wintypes.BOOL
+        user32.GetWindowTextLengthW.argtypes = [wintypes.HWND]
+        user32.GetWindowTextLengthW.restype = ctypes.c_int
+        user32.GetWindowTextW.argtypes = [wintypes.HWND, wintypes.LPWSTR, ctypes.c_int]
+        user32.GetWindowTextW.restype = ctypes.c_int
         pattern = re.compile(self.target.title_pattern, re.IGNORECASE)
         matches: list[int] = []
-
-        WNDENUMPROC = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
+        callback_type = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
 
         def callback(hwnd: int, _lparam: int) -> bool:
-            if not user32.IsWindowVisible(hwnd):
+            window = wintypes.HWND(hwnd)
+            if not user32.IsWindowVisible(window):
                 return True
-            length = user32.GetWindowTextLengthW(hwnd)
+            length = user32.GetWindowTextLengthW(window)
             if length <= 0:
                 return True
             buffer = ctypes.create_unicode_buffer(length + 1)
-            user32.GetWindowTextW(hwnd, buffer, len(buffer))
+            user32.GetWindowTextW(window, buffer, len(buffer))
             if pattern.search(buffer.value):
                 matches.append(int(hwnd))
             return True
 
-        user32.EnumWindows(WNDENUMPROC(callback), 0)
+        callback_ref = callback_type(callback)
+        user32.EnumWindows(callback_ref, 0)
         if not matches:
             raise TargetWindowError(
                 f"no visible window matched title pattern {self.target.title_pattern!r}"
             )
-        foreground = int(user32.GetForegroundWindow())
+        foreground = int(user32.GetForegroundWindow() or 0)
         if foreground in matches:
             return foreground
         if len(matches) == 1:
@@ -134,11 +150,16 @@ class WindowsTargetGuard:
         from ctypes import wintypes
 
         user32 = ctypes.windll.user32
+        user32.GetClientRect.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.RECT)]
+        user32.GetClientRect.restype = wintypes.BOOL
+        user32.ClientToScreen.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.POINT)]
+        user32.ClientToScreen.restype = wintypes.BOOL
+        window = wintypes.HWND(hwnd)
         rect = wintypes.RECT()
-        if not user32.GetClientRect(hwnd, ctypes.byref(rect)):
+        if not user32.GetClientRect(window, ctypes.byref(rect)):
             raise TargetWindowError("GetClientRect failed")
         point = wintypes.POINT(rect.left, rect.top)
-        if not user32.ClientToScreen(hwnd, ctypes.byref(point)):
+        if not user32.ClientToScreen(window, ctypes.byref(point)):
             raise TargetWindowError("ClientToScreen failed")
         width = int(rect.right - rect.left)
         height = int(rect.bottom - rect.top)
@@ -149,7 +170,10 @@ class WindowsTargetGuard:
         from ctypes import wintypes
 
         pid = wintypes.DWORD()
-        ctypes.windll.user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+        user32 = ctypes.windll.user32
+        user32.GetWindowThreadProcessId.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.DWORD)]
+        user32.GetWindowThreadProcessId.restype = wintypes.DWORD
+        user32.GetWindowThreadProcessId(wintypes.HWND(hwnd), ctypes.byref(pid))
         if not pid.value:
             return None
         try:
@@ -168,13 +192,63 @@ class WindowsTargetGuard:
         tolerance = self.target.size_tolerance_px
         return all(abs(a - e) <= tolerance for a, e in zip(actual, expected))
 
+    @staticmethod
+    def _primary_monitor_rect() -> tuple[int, int, int, int]:
+        from ctypes import wintypes
+
+        class MONITORINFO(ctypes.Structure):
+            _fields_ = [
+                ("cbSize", wintypes.DWORD),
+                ("rcMonitor", wintypes.RECT),
+                ("rcWork", wintypes.RECT),
+                ("dwFlags", wintypes.DWORD),
+            ]
+
+        user32 = ctypes.windll.user32
+        user32.MonitorFromPoint.argtypes = [wintypes.POINT, wintypes.DWORD]
+        user32.MonitorFromPoint.restype = ctypes.c_void_p
+        point = wintypes.POINT(0, 0)
+        monitor = user32.MonitorFromPoint(point, 1)
+        if not monitor:
+            raise TargetWindowError("could not resolve the primary display output")
+        info = MONITORINFO()
+        info.cbSize = ctypes.sizeof(MONITORINFO)
+        user32.GetMonitorInfoW.argtypes = [ctypes.c_void_p, ctypes.POINTER(MONITORINFO)]
+        user32.GetMonitorInfoW.restype = wintypes.BOOL
+        if not user32.GetMonitorInfoW(monitor, ctypes.byref(info)):
+            raise TargetWindowError("GetMonitorInfoW failed for the primary display")
+        rect = info.rcMonitor
+        return (int(rect.left), int(rect.top), int(rect.right), int(rect.bottom))
+
+    @staticmethod
+    def _rect_inside(
+        inner: tuple[int, int, int, int],
+        outer: tuple[int, int, int, int],
+    ) -> bool:
+        left, top, right, bottom = inner
+        o_left, o_top, o_right, o_bottom = outer
+        return (
+            o_left <= left
+            and o_top <= top
+            and right <= o_right
+            and bottom <= o_bottom
+        )
+
+    def _capture_output_allowed(self, rect: tuple[int, int, int, int]) -> bool:
+        if not self.target.require_primary_output:
+            return True
+        return self._rect_inside(rect, self._primary_monitor_rect())
+
     def _guard(self) -> tuple[int, tuple[int, int, int, int]]:
         self._require_windows()
         if self._emergency_active():
             raise EmergencyStop("F12 emergency stop is active")
         hwnd = self._find_target_window()
+        from ctypes import wintypes
+
         user32 = ctypes.windll.user32
-        if self.target.require_foreground and int(user32.GetForegroundWindow()) != hwnd:
+        user32.GetForegroundWindow.restype = wintypes.HWND
+        if self.target.require_foreground and int(user32.GetForegroundWindow() or 0) != hwnd:
             raise TargetWindowError("refusing input because the Roblox window is not foreground")
         process_name = self._process_name(hwnd)
         if process_name is None:
@@ -189,6 +263,10 @@ class WindowsTargetGuard:
             actual = (rect[2] - rect[0], rect[3] - rect[1])
             raise TargetWindowError(
                 f"client geometry {actual!r} does not match {self.target.expected_client_size!r}"
+            )
+        if not self._capture_output_allowed(rect):
+            raise TargetWindowError(
+                "Roblox client must lie completely on the primary display for DXcam capture"
             )
         return hwnd, rect
 
@@ -205,6 +283,7 @@ class WindowsTargetGuard:
                 process_allowed=False,
                 client_size=None,
                 geometry_allowed=False,
+                capture_output_allowed=False,
                 emergency_stop_active=False,
                 reasons=("Windows host required",),
             )
@@ -229,17 +308,17 @@ class WindowsTargetGuard:
             target_found = False
             reasons.append(str(exc))
 
-        foreground = bool(
-            hwnd and int(ctypes.windll.user32.GetForegroundWindow()) == int(hwnd)
-        )
+        from ctypes import wintypes
+
+        user32 = ctypes.windll.user32
+        user32.GetForegroundWindow.restype = wintypes.HWND
+        foreground = bool(hwnd and int(user32.GetForegroundWindow() or 0) == int(hwnd))
         if target_found and self.target.require_foreground and not foreground:
             reasons.append("Roblox window is not foreground")
 
         process_name = self._process_name(hwnd) if hwnd else None
         allowed_names = {value.casefold() for value in self.target.allowed_process_names}
-        process_allowed = bool(
-            process_name and process_name.casefold() in allowed_names
-        )
+        process_allowed = bool(process_name and process_name.casefold() in allowed_names)
         if target_found and not process_allowed:
             reasons.append(f"unverified target process: {process_name!r}")
 
@@ -253,6 +332,14 @@ class WindowsTargetGuard:
                 f"client geometry {client_size!r} does not match {self.target.expected_client_size!r}"
             )
 
+        try:
+            capture_output_allowed = bool(rect and self._capture_output_allowed(rect))
+        except Exception as exc:
+            capture_output_allowed = False
+            reasons.append(str(exc))
+        if target_found and rect and not capture_output_allowed:
+            reasons.append("Roblox client is outside the admitted primary DXcam output")
+
         return DriverDoctor(
             windows=windows,
             dxcam_importable=dxcam_importable,
@@ -262,7 +349,7 @@ class WindowsTargetGuard:
             process_allowed=process_allowed,
             client_size=client_size,
             geometry_allowed=geometry_allowed,
+            capture_output_allowed=capture_output_allowed,
             emergency_stop_active=emergency,
-            reasons=tuple(reasons),
+            reasons=tuple(dict.fromkeys(reasons)),
         )
-

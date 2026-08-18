@@ -67,3 +67,23 @@ def test_action_contract_rejects_unbounded_hold() -> None:
             keys=("w",),
             duration_ms=5000,
         )
+
+
+def test_window_target_requires_primary_capture_output_by_default() -> None:
+    target = WindowTarget()
+    assert target.require_primary_output
+    assert not WindowTarget(require_primary_output=False).require_primary_output
+
+
+def test_capture_output_boundary_is_fail_closed() -> None:
+    driver = WindowsGameDriver(WindowTarget(require_primary_output=True))
+    driver._primary_monitor_rect = lambda: (0, 0, 1920, 1080)
+    assert driver._capture_output_allowed((100, 100, 1700, 1000))
+    assert not driver._capture_output_allowed((-1, 100, 1599, 1000))
+    assert not driver._capture_output_allowed((100, 100, 2000, 1000))
+
+
+def test_capture_output_boundary_can_be_explicitly_relaxed() -> None:
+    driver = WindowsGameDriver(WindowTarget(require_primary_output=False))
+    driver._primary_monitor_rect = lambda: (_ for _ in ()).throw(AssertionError("not used"))
+    assert driver._capture_output_allowed((-500, 0, 1100, 900))

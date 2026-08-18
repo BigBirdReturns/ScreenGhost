@@ -72,14 +72,29 @@ class DTISafetyPolicy:
             "vote",
             "voting",
             "chat",
-            "anti_idle",
             "afk",
             "farm",
             "currency",
             "reward",
             "rejoin",
-            "multi_account",
             "captcha",
+        }
+    )
+    FORBIDDEN_PURPOSE_PHRASES = frozenset(
+        {
+            "anti_idle",
+            "auto_rejoin",
+            "claim_reward",
+            "collect_currency",
+            "give_star",
+            "give_stars",
+            "multi_account",
+            "open_chat",
+            "rate_player",
+            "rating_player",
+            "redeem_code",
+            "send_message",
+            "submit_vote",
         }
     )
 
@@ -123,15 +138,27 @@ class DTISafetyPolicy:
                 str(action.metadata.get("purpose", "")),
                 str(action.metadata.get("category", "")),
             )
-            purpose_tokens = {
-                token.casefold()
+            normalized_purposes = tuple(
+                value.casefold().replace("-", "_").replace("/", "_").replace(" ", "_")
                 for value in purpose_values
-                for token in value.replace("-", "_").replace("/", "_").split("_")
+            )
+            purpose_tokens = {
+                token
+                for value in normalized_purposes
+                for token in value.split("_")
                 if token
             }
-            forbidden = sorted(purpose_tokens.intersection(self.FORBIDDEN_PURPOSES))
+            forbidden_tokens = sorted(
+                purpose_tokens.intersection(self.FORBIDDEN_PURPOSES)
+            )
+            forbidden_phrases = sorted(
+                phrase
+                for phrase in self.FORBIDDEN_PURPOSE_PHRASES
+                if any(phrase in value for value in normalized_purposes)
+            )
+            forbidden = tuple(dict.fromkeys((*forbidden_tokens, *forbidden_phrases)))
             if forbidden:
-                reasons.append(f"action purpose is outside the co-play boundary: {forbidden}")
+                reasons.append(f"action purpose is outside the co-play boundary: {list(forbidden)}")
 
         return PolicyDecision(allowed=not reasons, reasons=tuple(reasons), warnings=tuple(warnings))
 

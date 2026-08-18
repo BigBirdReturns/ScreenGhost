@@ -66,3 +66,16 @@ def test_unallowlisted_key_is_blocked() -> None:
         keys=("f4",),
     )
     assert not DTISafetyPolicy().evaluate(context, action).allowed
+
+
+def test_give_stars_phrase_is_structurally_blocked() -> None:
+    context = RunContext(venue=PlayVenue.PRIVATE_SERVER, mode=ControlMode.ASSISTED)
+    decision = DTISafetyPolicy().evaluate(context, safe_action("give_stars"))
+    assert not decision.allowed
+    assert any("give_stars" in reason for reason in decision.reasons)
+
+
+def test_star_themed_wardrobe_action_is_not_misclassified_as_voting() -> None:
+    context = RunContext(venue=PlayVenue.FREEPLAY, mode=ControlMode.FAMILY_COPILOT)
+    decision = DTISafetyPolicy().evaluate(context, safe_action("equip_star_necklace"))
+    assert decision.allowed
