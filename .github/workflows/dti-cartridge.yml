@@ -63,9 +63,13 @@ jobs:
         if: runner.os == 'Windows' && matrix.python == '3.13'
         shell: pwsh
         run: |
-          $PSNativeCommandUseErrorActionPreference = $false
-          & cmd.exe /d /c "PREFLIGHT_DTI.cmd"
-          $exitCode = $LASTEXITCODE
+          $process = Start-Process `
+            -FilePath "cmd.exe" `
+            -ArgumentList @("/d", "/c", "PREFLIGHT_DTI.cmd") `
+            -Wait `
+            -PassThru `
+            -NoNewWindow
+          $exitCode = $process.ExitCode
           if ($exitCode -ne 3) {
             throw "Expected no-target preflight refusal exit code 3; observed $exitCode"
           }
