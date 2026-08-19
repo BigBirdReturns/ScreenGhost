@@ -1,0 +1,53 @@
+{
+  "schema": "screenghost_dti_profile_v1",
+  "app_version": "live-unqualified",
+  "window_title_pattern": "^Roblox$|Roblox",
+  "client_size": [1600, 900],
+  "observation_regions": {
+    "phase_header": [0.24, 0.045, 0.76, 0.18],
+    "theme_banner": [0.26, 0.055, 0.74, 0.17],
+    "timer": [0.43, 0.0, 0.57, 0.10],
+    "equipped_panel": [0.08, 0.18, 0.92, 0.92],
+    "results_panel": [0.23, 0.07, 0.77, 0.88]
+  },
+  "anchors": [
+    {
+      "anchor_id": "quick-teleport-button",
+      "semantic_label": "Quick Teleport",
+      "role": "button",
+      "metadata": {
+        "authority": "runtime visual resolution required"
+      }
+    },
+    {
+      "anchor_id": "freeplay-dressing-room",
+      "semantic_label": "Dressing Room",
+      "role": "menu_item",
+      "station": "dressing_room"
+    },
+    {
+      "anchor_id": "freeplay-runway",
+      "semantic_label": "Freeplay Runway",
+      "role": "menu_item",
+      "station": "runway"
+    },
+    {
+      "anchor_id": "walk-runway",
+      "semantic_label": "Walk the Runway",
+      "role": "button",
+      "station": "runway"
+    }
+  ],
+  "quick_teleport_labels": [
+    "Dressing Room",
+    "Freeplay Runway"
+  ],
+  "wardrobe": [],
+  "metadata": {
+    "classification": "example enrollment profile",
+    "coordinate_policy": "observation ROIs only; action targets resolve from current pixels",
+    "live_status": "not physically qualified",
+    "preferred_venue": "Freeplay",
+    "emergency_stop": "F12"
+  }
+}

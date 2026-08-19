@@ -1,0 +1,6 @@
+# DTI cartridge: ordinary Windows capture/input and local deterministic tests.
+Pillow>=10
+numpy>=1.26
+psutil>=5.9
+pytest>=8
+dxcam>=0.3,<0.4; platform_system == "Windows"
