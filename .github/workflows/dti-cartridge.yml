@@ -55,3 +55,27 @@ jobs:
         run: python -m experiments.dti validate-profile configs/dti/profile.example.json
       - name: Prove OCR-degraded theme resolution
         run: python -m experiments.dti resolve-theme Victoran
+      - name: Prove one-command Windows bootstrap
+        if: runner.os == 'Windows' && matrix.python == '3.13'
+        shell: cmd
+        run: BOOTSTRAP_DTI.cmd
+      - name: Prove missing-target refusal and evidence
+        if: runner.os == 'Windows' && matrix.python == '3.13'
+        shell: pwsh
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $false
+          & cmd.exe /d /c "PREFLIGHT_DTI.cmd"
+          $exitCode = $LASTEXITCODE
+          if ($exitCode -ne 3) {
+            throw "Expected no-target preflight refusal exit code 3; observed $exitCode"
+          }
+          $doctor = Get-ChildItem artifacts/dti/evidence -Recurse -Filter doctor.json |
+            Sort-Object LastWriteTime -Descending |
+            Select-Object -First 1
+          if (-not $doctor) {
+            throw "Preflight refusal did not retain doctor.json"
+          }
+          $payload = Get-Content $doctor.FullName -Raw | ConvertFrom-Json
+          if ($payload.ready -ne $false) {
+            throw "Missing-target doctor receipt did not record ready=false"
+          }
