@@ -79,3 +79,86 @@ jobs:
           if ($payload.ready -ne $false) {
             throw "Missing-target doctor receipt did not record ready=false"
           }
+      - name: Build source-qualified DTI package
+        if: runner.os == 'Windows' && matrix.python == '3.13'
+        shell: pwsh
+        run: |
+          $packageName = "screenghost-dti-floor-v0.1.0"
+          $dist = Join-Path $PWD "dist"
+          $root = Join-Path $dist $packageName
+          Remove-Item $root -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path $root | Out-Null
+
+          $paths = @(
+            ".github/workflows/dti-cartridge.yml",
+            "BOOTSTRAP_DTI.cmd",
+            "PREFLIGHT_DTI.cmd",
+            "requirements-dti.txt",
+            "configs/dti",
+            "docs/DTI_CARTRIDGE_V0.md",
+            "docs/DTI_COMMODITY_LEDGER.md",
+            "experiments/dti",
+            "scripts/dti",
+            "tests/dti"
+          )
+          foreach ($rel in $paths) {
+            $source = Join-Path $PWD $rel
+            $destination = Join-Path $root $rel
+            if (Test-Path $source -PathType Container) {
+              New-Item -ItemType Directory -Force -Path $destination | Out-Null
+              Copy-Item (Join-Path $source "*") -Destination $destination -Recurse -Force
+            } else {
+              New-Item -ItemType Directory -Force -Path (Split-Path $destination -Parent) | Out-Null
+              Copy-Item $source -Destination $destination -Force
+            }
+          }
+          Copy-Item (Join-Path $PWD "docs/DTI_CARTRIDGE_V0.md") (Join-Path $root "README.md") -Force
+
+          $qualification = [ordered]@{
+            schema = "screenghost_dti_qualification_v1"
+            version = "0.1.0"
+            source_commit = "${{ github.sha }}"
+            evidence_tier = "source_and_fixture_qualified"
+            software_ci = "passed"
+            windows_bootstrap = "passed"
+            missing_target_refusal = "passed"
+            official_client_capture = "not_performed"
+            freeplay_round = "not_performed"
+            public_round = "not_performed"
+          }
+          $qualification | ConvertTo-Json -Depth 6 | Set-Content (Join-Path $root "QUALIFICATION_REPORT.json") -Encoding utf8
+
+          $rootPath = (Resolve-Path $root).Path
+          $files = Get-ChildItem $root -Recurse -File |
+            Sort-Object FullName |
+            ForEach-Object {
+              [ordered]@{
+                path = $_.FullName.Substring($rootPath.Length + 1).Replace("\", "/")
+                bytes = $_.Length
+                sha256 = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+              }
+            }
+          $manifest = [ordered]@{
+            schema = "screenghost_dti_floor_package_v1"
+            version = "0.1.0"
+            source_commit = "${{ github.sha }}"
+            generated_at = (Get-Date).ToUniversalTime().ToString("o")
+            files = $files
+          }
+          $manifest | ConvertTo-Json -Depth 8 | Set-Content (Join-Path $root "PACKAGE_MANIFEST.json") -Encoding utf8
+
+          $zip = Join-Path $dist "$packageName.zip"
+          Remove-Item $zip -Force -ErrorAction SilentlyContinue
+          Compress-Archive -Path (Join-Path $root "*") -DestinationPath $zip -Force
+          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $packageName.zip" | Set-Content "$zip.sha256" -Encoding ascii
+      - name: Upload source-qualified DTI package
+        if: runner.os == 'Windows' && matrix.python == '3.13'
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenghost-dti-floor-v0.1.0
+          path: |
+            dist/screenghost-dti-floor-v0.1.0.zip
+            dist/screenghost-dti-floor-v0.1.0.zip.sha256
+          if-no-files-found: error
+          compression-level: 0
