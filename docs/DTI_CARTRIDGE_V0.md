@@ -106,7 +106,7 @@ The streamlined Windows path is:
 .\PREFLIGHT_DTI.cmd -Bootstrap
 
 # Later runs:
-.\PREFLIGHT_DRI.cmd
+.\PREFLIGHT_DTI.cmd
 ```
 
 `PREFLIGHT_DTI.cmd` writes a timestamped `doctor.json`, `capture.json`, `freeplay-entry.png`, and content hash under `artifacts\dti\evidence`. It proves the live eyes and target-window custody only.
@@ -116,7 +116,6 @@ The equivalent manual setup, from the branch that contains PR #13 and this cartr
 ```powershell
 py -3.13 -m venv artifacts\dti\venv
 .\artifacts\dti\venv\Scripts\Activate.ps1
-python -m pip install -r requirements-generic-utility.txt
 python -m pip install -r requirements-dti.txt
 
 python -m experiments.dti validate-profile configs/dti/profile.example.json

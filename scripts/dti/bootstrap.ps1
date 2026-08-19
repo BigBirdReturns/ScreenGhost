@@ -34,8 +34,6 @@ if (-not (Test-Path $VenvPython)) { throw "Virtual-environment Python was not cr
 
 & $VenvPython -m pip install --upgrade pip
 if ($LASTEXITCODE -ne 0) { throw "pip upgrade failed" }
-& $VenvPython -m pip install -r (Join-Path $Repo "requirements-generic-utility.txt")
-if ($LASTEXITCODE -ne 0) { throw "generic utility dependency install failed" }
 & $VenvPython -m pip install -r (Join-Path $Repo "requirements-dti.txt")
 if ($LASTEXITCODE -ne 0) { throw "DTI dependency install failed" }
 
